@@ -1,31 +1,44 @@
-# Cross-Paper Synthesis (filled from the 4 core papers)
+# Cross-Paper Synthesis
 
-## Cross-paper failure-category tracker
+Notes comparing the four papers above, written after finishing all four.
 
-Rows are *my* normalized categories; check marks show which paper reports something matching that pattern, in their own terminology. Recurrence across independent papers = a real, general failure type, not a one-off — this is the key thing to look for.
+## Failure-category overlap
 
-| Category name (yours, normalized) | Paper 1 (Multi-Stage) | Paper 2 (Fiscal LLM) | Paper 3 (VAREX) | Paper 4 (SOB) |
+| Category | OCBC (multi-stage) | Fiscal LLM (Karnataka) | VAREX | SOB |
 |---|---|---|---|---|
-| Parse / invalid JSON syntax | | | (implied by "non-compliant JSON") | ✓ "Parse failures" |
-| Schema violation / wrong structure | | ✓ "Structural mismatch" (via TEDS) | ✓ "Schema echo" (extreme form) | ✓ "Schema violations" |
-| Value error (wrong content, right shape) | | ✓ "Numerical consistency failure" | (implied, not separately named) | ✓ "Value errors" — called "the dominant gap" |
-| Missing / omitted field | | | ✓ "Under-extraction" | ✓ "Missing paths" |
-| Type mismatch (right value, wrong type) | | | | ✓ "Type mismatches" |
-| Terminology/naming ambiguity (domain-specific) | ✓ "Inconsistent terminology" | | | |
-| Numeric scale/unit ambiguity (domain-specific) | ✓ "Currency unit ambiguity" | | | |
-| OCR-specific omission (upstream error, not model error) | ✓ "OCR errors" (keyword omission) | (image conversion deliberately avoids OCR) | | (out of scope — text-only benchmark) |
+| Parse / invalid JSON | | | (implied) | Parse failures |
+| Wrong structure/schema | | Structural mismatch (TEDS) | Schema echo | Schema violations |
+| Wrong value, right shape | | Numerical consistency failure | (not separately named) | Value errors — called the dominant gap |
+| Missing/omitted field | | | Under-extraction | Missing paths |
+| Right value, wrong type | | | | Type mismatches |
+| Domain terminology ambiguity | Inconsistent terminology | | | |
+| Numeric scale/unit ambiguity | Currency unit ambiguity | | | |
+| OCR keyword omission | OCR errors | (image-only, no OCR used) | | (out of scope, text-only) |
 
-**What this tells you:** "Missing field," "wrong value," and "wrong structure/schema" are the three categories that show up across almost every paper independently — these are your safest, most defensible core categories. "Schema echo" and "under-extraction" (VAREX) are more specific, model-size-dependent failure modes that only show up in small models — directly relevant since you're testing small models. The two domain-specific rows (terminology, currency/units) only appear in the one paper that actually works with real financial documents (Paper 1) — this is a strong signal that your financial-document taxonomy needs categories the general-purpose benchmarks (3, 4) simply never encounter, because their test data doesn't have this kind of domain ambiguity. That's a legitimate, citable argument for why a financial-specific taxonomy is needed rather than just reusing VAREX's or SOB's categories as-is.
+"Missing field," "wrong value," and "wrong structure" recur independently
+across three of the four papers, which suggests these three are the safest
+core categories to build a taxonomy around. Schema echo and under-extraction
+are more specific to small models, which matters since I'm testing small
+models specifically. The two domain-specific rows (terminology, currency
+units) only show up in the one paper actually working with real financial
+documents — the two general-purpose benchmarks never encounter this kind of
+ambiguity because their test data doesn't have it. That's a fairly direct
+argument for why a financial-specific taxonomy adds something the existing
+general benchmarks don't cover.
 
-## Architecture comparison
+## Architecture comparison against my own proposal
 
-| | Paper 1 (Multi-Stage, OCBC) | Paper 2 (Fiscal LLM, Karnataka) | Your proposed design |
+| | OCBC (multi-stage) | Fiscal LLM (Karnataka) | My proposed design |
 |---|---|---|---|
-| Vision/OCR stage | Pre-processing (deskew, contrast) + PaddleOCR v3 | None — high-res image fed directly to LLM | PaddleOCR / TrOCR, + PaddleOCR-VL as ablation |
-| Retrieval/filtering stage | BM25 keyword retrieval to narrow pages before extraction | Sequential context carry-forward (no page filtering — every page processed) | None currently — worth considering if you extend to multi-page documents |
-| Extraction model | Compact VLM (miniCPM-o 2.6, 8B) on GPU | Large frontier LLM (Gemini 2.5 Pro) via API | Small quantized local LLM (Phi-3 Mini / Mistral 7B GGUF), CPU-only |
-| Output format | Structured fields, merged from LLM summaries + VLM extraction | 5 CSV schema types | JSON |
-| Failure handling / analysis | Qualitative error write-up (3 categories, no counts) | No error taxonomy — internal consistency validation instead (no ground truth available) | Structured, quantified taxonomy (primary contribution) |
-| GPU requirement | Yes (A100) | Yes (cloud API) | No — this is your key differentiator from both |
+| Vision/OCR stage | Pre-processing + PaddleOCR v3 | None — image fed directly to LLM | PaddleOCR/TrOCR, + PaddleOCR-VL as ablation |
+| Retrieval/filtering | BM25 keyword retrieval | Sequential context carry-forward, no filtering | None currently |
+| Extraction model | Compact VLM (8B, GPU) | Frontier LLM via API (Gemini 2.5 Pro) | Small quantized local LLM (Phi-3 Mini / Mistral 7B), CPU |
+| Output format | Structured fields | 5 CSV schema types | JSON |
+| Failure handling | Qualitative, 3 categories, no counts | No taxonomy — internal consistency validation | Structured, quantified taxonomy |
+| GPU requirement | Yes | Yes (cloud API) | No |
 
-**What stands out:** neither of the two closest financial-extraction papers actually achieves your "no GPU, no cloud" constraint — Paper 1 needs an A100, Paper 2 uses a cloud API model entirely. This is worth stating plainly in your thesis: the deployment constraint you're targeting is *not yet demonstrated* in the closest existing financial-document extraction literature, which is a legitimate, narrow, and honest way to state your engineering contribution (separate from the evaluation-gap contribution, which is the stronger of the two — see your proposal's gap framing).
+Neither of the two closest financial-extraction papers actually meets a
+no-GPU, no-cloud constraint — the OCBC paper needs an A100, the Karnataka
+paper depends on a hosted frontier model. Worth stating plainly in the
+thesis that this deployment constraint isn't demonstrated yet in the
+closest existing financial-document extraction work I could find.

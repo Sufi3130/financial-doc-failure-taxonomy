@@ -30,6 +30,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Key Results
+
+_Not yet available — to be filled in once evaluation on SROIE/CORD is
+complete (target: Milestone 2)._
+
+| Metric | OCR+LLM pipeline | OCR-free VLM ablation |
+|---|---|---|
+| Field-level accuracy | TBD | TBD |
+| Schema compliance rate | TBD | TBD |
+| Avg. latency / page (CPU) | TBD | TBD |
+
 ## Status
 
 See [docs/milestones.md](docs/milestones.md) and the repo's Issues/Milestones tabs for current progress.
