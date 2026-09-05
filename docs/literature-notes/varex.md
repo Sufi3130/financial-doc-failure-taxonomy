@@ -1,0 +1,24 @@
+# Paper: VAREX: A Benchmark for Multi-Modal Structured Extraction from Documents
+**Link:** https://arxiv.org/pdf/2603.15118
+**Authors:** Barzelay et al., IBM Research
+**Pass completed:** 3 (full)
+
+### Architecture
+This isn't a document-extraction pipeline like papers 1–2 — it's a **benchmark construction method** plus an **evaluation protocol**. Worth treating differently in your notes:
+- **Reverse Annotation pipeline** (their core method): instead of annotating real documents by hand, they start from blank fillable PDF forms, fill them with deterministic placeholder IDs, have an LLM infer a JSON schema from the filled form, then replace the placeholders with realistic synthetic values. Because every value is programmatically written to a known form field, the ground truth is guaranteed correct by construction — no manual labeling needed.
+- **Evaluation protocol**: each model is given a document (in one of four formats — plain text, layout-preserved text, image, or both) plus a JSON schema, and must return matching JSON, scored primarily by exact-match "Value Accuracy" per field.
+
+*Why I labeled it this way, not as a "pipeline" like papers 1–2:* your thesis's pipeline extracts from real scanned documents; VAREX's whole point is generating synthetic documents with perfect ground truth to test models on. You won't reuse their pipeline, but you will likely reuse their **evaluation methodology** — specifically, running the same document through multiple input formats to isolate whether a failure is a vision problem vs. a language-understanding problem is directly transferable to your OCR+LLM vs. OCR-free-VLM comparison.
+
+### Failure categories named
+- **Schema echo** — a model returns the schema definition itself (field names, types, `$defs`) instead of extracted values. Two sub-forms: *schema reproduction* (returns the raw schema verbatim, dominant failure in InternVL3.5 1B) and *schema-wrapped extraction* (correct values are extracted but left nested inside schema metadata like `"type": "object", "properties": {...}}`, dominant in Qwen3-VL 2B). *Why this is treated as one category with two forms rather than two categories:* both stem from the same root cause — the model imitating the shape of its instructions instead of following them — the paper shows this directly by testing that removing the JSON Schema `$defs` feature (a common cause) fixes both forms simultaneously (Qwen3-VL 2B rises from 27% to 92% compliance).
+- **Under-extraction** — the model understands the task and produces correctly-shaped JSON, but leaves most fields empty. Distinguished from schema echo by a specific signature: accuracy on the *first* fields requested is much higher than on the *last* fields (they measure a 2.1x gap between first and last quartile at 800M scale) — meaning the model runs out of generation capacity partway through, not that it doesn't understand the schema at all.
+- **Instruction-following threshold (2–4B)** — below this size, failures are overwhelmingly the two categories above (format/compliance failures); above it, failures shift to being *genuine extraction errors* — OCR mistakes, hallucinated values, missed fields (the same categories other papers report). *Why this matters as its own "category" for your thesis:* it means your failure taxonomy will likely look qualitatively different depending on which model size you test — worth designing your taxonomy to explicitly track this axis (below-threshold vs. above-threshold failure types), since Phi-3 Mini (3.8B) sits right at this boundary.
+
+### What I'd do differently
+Their headline number — that a 2B model with extraction-specific fine-tuning (NuExtract 2.0) jumps ~81 percentage points over its untrained 2B base — suggests something worth testing in your own thesis: is Phi-3 Mini's or Mistral 7B's *raw* performance actually representative of "small models," or would a small amount of extraction-focused fine-tuning change your entire failure taxonomy? Worth at least flagging as a limitation/future work item if you don't have time to test it directly.
+
+### Relevant citations to chase (max 3)
+- SO-Bench (Feng et al. 2025) and ExtractBench (Ferguson et al. 2026) — the two benchmarks VAREX positions itself against; both are single-modality, worth a one-line comparison in your related work.
+- JSONSchemaBench (Geng et al. 2025) — evaluates structured output compliance broadly (not extraction-specific); useful for distinguishing "can it produce valid JSON" from "does the JSON contain the right values," which is exactly the distinction your taxonomy should preserve.
+- Docling (Livathinos et al. 2025) — an open-source layout-aware parsing toolkit mentioned as producing output similar to VAREX's "layout-preserving text" modality — potentially useful as an OCR post-processing step for your own pipeline instead of raw OCR output.

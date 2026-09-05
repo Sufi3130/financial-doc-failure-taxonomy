@@ -1,0 +1,19 @@
+# OCR
+paddleocr
+paddlepaddle
+transformers  # for TrOCR
+
+# LLM inference
+llama-cpp-python
+
+# Data / eval
+numpy
+pandas
+scikit-learn
+
+# App
+streamlit
+
+# Utils
+pillow
+tqdm

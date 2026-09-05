@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Models & data (large files - don't commit)
+*.gguf
+*.bin
+*.pt
+*.pth
+data/raw/
+evaluation/datasets/*.zip
+
+# Env / secrets
+.env
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
