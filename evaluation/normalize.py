@@ -67,24 +67,69 @@ def normalize_date(s):
     return None
 
 
-def normalize_total(s):
-    """Parse a money amount into a 2-decimal string, e.g. 'RM 1,007.5' -> '1007.50'.
-
-    Currency symbols and spaces are dropped; a comma followed by exactly two
-    digits at the end is treated as a decimal comma, otherwise as a thousands
-    separator.
-    """
-    if not s or not s.strip():
+def _to_decimal_str(num):
+    try:
+        return str(Decimal(num).quantize(Decimal("0.01")))
+    except InvalidOperation:
         return None
+
+
+def _parse_amount_my(s):
+    """Malaysian ringgit (SROIE): '.' is the decimal point, ',' groups thousands,
+    except a lone ',dd' at the end, which is a decimal comma."""
     m = _AMOUNT.search(s)
     if not m:
-        return None
+        return None, False
     num = m[0].replace(" ", "")
     if re.fullmatch(r"-?\d+,\d{2}", num):
         num = num.replace(",", ".")
     else:
         num = num.replace(",", "")
-    try:
-        return str(Decimal(num).quantize(Decimal("0.01")))
-    except InvalidOperation:
-        return None
+    return _to_decimal_str(num), False
+
+
+def _parse_amount_id(s):
+    """Indonesian rupiah (CORD): both '.' and ',' group thousands
+    ('60.000' = '60,000' = 60000); only a final separator followed by exactly
+    two digits is a decimal part ('35.000,00', '226,500.00').
+    Irregular grouping ('57,0000', '1178.100') is parsed by dropping all
+    separators and reported as irregular."""
+    m = _ID_AMOUNT.search(s)
+    if not m:
+        return None, False
+    num = m[0].replace(" ", "").rstrip(".,")
+    sign = "-" if num.startswith("-") else ""
+    num = num.lstrip("-")
+
+    decimals = ""
+    if d := re.search(r"[.,](\d{2})$", num):
+        decimals, num = d[1], num[: d.start()]
+
+    groups = re.split(r"[.,]", num)
+    regular = len(groups) == 1 or (
+        1 <= len(groups[0]) <= 3 and all(len(g) == 3 for g in groups[1:]))
+    value = sign + "".join(groups) + ("." + decimals if decimals else "")
+    return _to_decimal_str(value), not regular
+
+
+_ID_AMOUNT = re.compile(r"-?\s*\d[\d.,]*")
+_PARSERS = {"my": _parse_amount_my, "id": _parse_amount_id}
+
+
+def parse_amount(s, locale="my"):
+    """Return (normalised 2-decimal string or None, irregular_format flag)."""
+    if not isinstance(s, str) or not s.strip():
+        return None, False
+    return _PARSERS[locale](s)
+
+
+def normalize_total(s, locale="my"):
+    """Parse a money amount into a 2-decimal string.
+
+    locale="my" (SROIE, ringgit): 'RM 1,007.5' -> '1007.50'
+    locale="id" (CORD, rupiah):   'Rp. 60.000' -> '60000.00'
+
+    Ground truth and predictions of the same dataset must use the same locale;
+    the manifest stores it per receipt.
+    """
+    return parse_amount(s, locale)[0]

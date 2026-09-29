@@ -1,6 +1,6 @@
 import pytest
 
-from evaluation.normalize import normalize_date, normalize_total
+from evaluation.normalize import normalize_date, normalize_total, parse_amount
 
 
 @pytest.mark.parametrize("raw, expected", [
@@ -51,3 +51,35 @@ def test_normalize_date(raw, expected):
 ])
 def test_normalize_total(raw, expected):
     assert normalize_total(raw) == expected
+
+
+@pytest.mark.parametrize("raw, expected, irregular", [
+    # formats observed in CORD total.total_price (rupiah)
+    ("60.000", "60000.00", False),
+    ("28,000", "28000.00", False),
+    ("174,600", "174600.00", False),
+    ("1,565,938", "1565938.00", False),
+    ("3.600.000", "3600000.00", False),
+    ("91000", "91000.00", False),
+    ("Rp 38.000", "38000.00", False),
+    ("Rp. 91,000", "91000.00", False),
+    ("Rp.118.000", "118000.00", False),
+    ("226,500.00", "226500.00", False),
+    ("35.000,00", "35000.00", False),
+    ("Rp 58000.00", "58000.00", False),
+    ("TOTAL 47,499", "47499.00", False),
+    ("-5.000", "-5000.00", False),
+    # malformed grouping: best-effort value, flagged
+    ("39,200,00", "39200.00", False),
+    ("57,0000", "570000.00", True),
+    ("1178.100", "1178100.00", True),
+    ("", None, False),
+    ("Rp", None, False),
+])
+def test_parse_amount_id(raw, expected, irregular):
+    assert parse_amount(raw, locale="id") == (expected, irregular)
+
+
+def test_same_string_differs_by_locale():
+    assert normalize_total("60.000", locale="my") == "60.00"
+    assert normalize_total("60.000", locale="id") == "60000.00"

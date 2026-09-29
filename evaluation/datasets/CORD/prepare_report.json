@@ -1,0 +1,251 @@
+{
+  "locale": "id",
+  "splits": {
+    "train": {
+      "receipts": 800,
+      "exported": false,
+      "line_items": 2105,
+      "total_issues": {
+        "irregular:total": 3,
+        "missing:total": 21,
+        "multiple:total": 1
+      },
+      "receipts_with_issues": {
+        "train_035": [
+          "missing:total"
+        ],
+        "train_052": [
+          "missing:total"
+        ],
+        "train_113": [
+          "missing:total"
+        ],
+        "train_122": [
+          "missing:total"
+        ],
+        "train_135": [
+          "multiple:total"
+        ],
+        "train_153": [
+          "irregular:total"
+        ],
+        "train_338": [
+          "missing:total"
+        ],
+        "train_460": [
+          "missing:total"
+        ],
+        "train_468": [
+          "missing:total"
+        ],
+        "train_490": [
+          "missing:total"
+        ],
+        "train_500": [
+          "missing:total"
+        ],
+        "train_503": [
+          "missing:total"
+        ],
+        "train_507": [
+          "missing:total"
+        ],
+        "train_524": [
+          "missing:total"
+        ],
+        "train_555": [
+          "missing:total"
+        ],
+        "train_558": [
+          "irregular:total"
+        ],
+        "train_572": [
+          "missing:total"
+        ],
+        "train_670": [
+          "missing:total"
+        ],
+        "train_682": [
+          "missing:total"
+        ],
+        "train_683": [
+          "missing:total"
+        ],
+        "train_694": [
+          "missing:total"
+        ],
+        "train_695": [
+          "missing:total"
+        ],
+        "train_699": [
+          "missing:total"
+        ],
+        "train_783": [
+          "missing:total"
+        ],
+        "train_791": [
+          "irregular:total"
+        ]
+      },
+      "gt_parse_field_coverage": {
+        "menu": 800,
+        "menu.cnt": 729,
+        "menu.discountprice": 34,
+        "menu.etc": 1,
+        "menu.itemsubtotal": 1,
+        "menu.nm": 795,
+        "menu.num": 37,
+        "menu.price": 799,
+        "menu.sub": 122,
+        "menu.sub.cnt": 54,
+        "menu.sub.nm": 122,
+        "menu.sub.price": 55,
+        "menu.sub.unitprice": 6,
+        "menu.unitprice": 291,
+        "menu.vatyn": 2,
+        "sub_total": 548,
+        "sub_total.discount_price": 62,
+        "sub_total.etc": 68,
+        "sub_total.othersvc_price": 1,
+        "sub_total.service_price": 98,
+        "sub_total.subtotal_price": 530,
+        "sub_total.tax_price": 355,
+        "total": 798,
+        "total.cashprice": 517,
+        "total.changeprice": 500,
+        "total.creditcardprice": 121,
+        "total.emoneyprice": 46,
+        "total.menuqty_cnt": 228,
+        "total.menutype_cnt": 42,
+        "total.total_etc": 26,
+        "total.total_price": 779,
+        "void_menu": 1,
+        "void_menu.nm": 1,
+        "void_menu.price": 1
+      },
+      "duplicate_image_groups": [
+        [
+          "train_058",
+          "train_109"
+        ],
+        [
+          "train_265",
+          "train_285"
+        ]
+      ]
+    },
+    "validation": {
+      "receipts": 100,
+      "exported": true,
+      "line_items": 221,
+      "total_issues": {
+        "missing:total": 2
+      },
+      "receipts_with_issues": {
+        "validation_029": [
+          "missing:total"
+        ],
+        "validation_049": [
+          "missing:total"
+        ]
+      },
+      "gt_parse_field_coverage": {
+        "menu": 100,
+        "menu.cnt": 94,
+        "menu.discountprice": 4,
+        "menu.nm": 100,
+        "menu.num": 2,
+        "menu.price": 99,
+        "menu.sub": 18,
+        "menu.sub.cnt": 8,
+        "menu.sub.nm": 17,
+        "menu.sub.price": 9,
+        "menu.unitprice": 31,
+        "menu.vatyn": 1,
+        "sub_total": 67,
+        "sub_total.discount_price": 6,
+        "sub_total.etc": 1,
+        "sub_total.service_price": 13,
+        "sub_total.subtotal_price": 67,
+        "sub_total.tax_price": 47,
+        "total": 100,
+        "total.cashprice": 64,
+        "total.changeprice": 64,
+        "total.creditcardprice": 14,
+        "total.emoneyprice": 4,
+        "total.menuqty_cnt": 26,
+        "total.menutype_cnt": 3,
+        "total.total_etc": 4,
+        "total.total_price": 98
+      },
+      "duplicate_image_groups": []
+    },
+    "test": {
+      "receipts": 100,
+      "exported": true,
+      "line_items": 251,
+      "total_issues": {
+        "missing:total": 5
+      },
+      "receipts_with_issues": {
+        "test_009": [
+          "missing:total"
+        ],
+        "test_037": [
+          "missing:total"
+        ],
+        "test_039": [
+          "missing:total"
+        ],
+        "test_057": [
+          "missing:total"
+        ],
+        "test_076": [
+          "missing:total"
+        ]
+      },
+      "gt_parse_field_coverage": {
+        "menu": 100,
+        "menu.cnt": 87,
+        "menu.discountprice": 4,
+        "menu.etc": 1,
+        "menu.itemsubtotal": 3,
+        "menu.nm": 100,
+        "menu.num": 6,
+        "menu.price": 99,
+        "menu.sub": 17,
+        "menu.sub.cnt": 8,
+        "menu.sub.nm": 17,
+        "menu.sub.price": 11,
+        "menu.unitprice": 34,
+        "sub_total": 66,
+        "sub_total.discount_price": 6,
+        "sub_total.etc": 7,
+        "sub_total.service_price": 12,
+        "sub_total.subtotal_price": 65,
+        "sub_total.tax_price": 43,
+        "total": 100,
+        "total.cashprice": 67,
+        "total.changeprice": 56,
+        "total.creditcardprice": 16,
+        "total.emoneyprice": 1,
+        "total.menuqty_cnt": 29,
+        "total.menutype_cnt": 7,
+        "total.total_etc": 3,
+        "total.total_price": 95
+      },
+      "duplicate_image_groups": []
+    }
+  },
+  "cross_split_duplicate_groups": [],
+  "subset": {
+    "splits": [
+      "validation",
+      "test"
+    ],
+    "n": 50,
+    "seed": 42,
+    "eligible": 193,
+    "rule": "validation+test receipts, not a duplicate of a lower ID, exactly one regular total_price"
+  }
+}

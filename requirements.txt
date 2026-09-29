@@ -16,6 +16,7 @@ pydantic==2.13.5
 # Data / eval
 numpy==2.3.5
 pandas==3.0.5
+pyarrow==25.0.1  # reads the CORD v2 Arrow files
 
 # Utils
 pillow==12.3.0
