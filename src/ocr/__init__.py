@@ -11,7 +11,7 @@ Engines import their heavy libraries only when first used.
 from .base import OCREngine, OCRLine, OCRResult, OCRWord
 from .layout import ReadingOrder, reading_order
 from .paddle import PaddleOCREngine
-from .runlog import load_run_log, new_run_dir, save_run_log
+from .runlog import cached_ocr, load_run_log, new_run_dir, save_run_log
 from .tesseract import TesseractEngine
 
 # Extension point: register new OCREngine subclasses here (see base.py)
@@ -30,6 +30,6 @@ def get_engine(name, **kwargs) -> OCREngine:
 
 __all__ = [
     "ENGINES", "OCREngine", "OCRLine", "OCRResult", "OCRWord", "PaddleOCREngine",
-    "ReadingOrder", "TesseractEngine", "get_engine", "load_run_log", "new_run_dir",
+    "ReadingOrder", "TesseractEngine", "cached_ocr", "get_engine", "load_run_log", "new_run_dir",
     "reading_order", "save_run_log",
 ]

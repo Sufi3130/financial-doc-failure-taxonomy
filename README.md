@@ -121,6 +121,47 @@ prompt_text = reading_order(result.lines).text
   `_load`, `_predict`, `version` and `settings`, report confidence in 0–1 and
   pixel boxes on the original image, then register it in `ENGINES` in
   `src/ocr/__init__.py`.
+- **OCR cache:** `cached_ocr()` saves each receipt's run log under
+  `runs/cache/ocr/<engine>/` and reuses it while the engine settings are
+  unchanged. Delete `runs/cache/` after upgrading an engine.
+
+## Extraction stage
+
+`src/extraction/` turns reading-order OCR text into a validated `Receipt`
+(`company`, `date`, `address`, `total`: each a string or `null`) with Phi-3
+Mini Q4 via llama-cpp-python. It runs on CPU with `temperature=0`, a fixed
+seed, `n_ctx=4096` and `max_tokens=256`.
+
+```bash
+python -m src.extraction evaluation/datasets/SROIE/raw/test/X00016469670.jpg --engine paddleocr --shots 2
+```
+
+- **Prompt** (`prompts.py`, version recorded in every log): instructions plus
+  few-shot examples, then the target receipt. Phi-3's GGUF chat template
+  has no system role and silently drops `system` messages, so the
+  instructions are sent as part of the first user turn.
+- **Few-shot examples** (`fewshot.py`): 2 by default (`--shots 0` for
+  zero-shot), picked with a seed from **SROIE train only**. Excluded: train
+  receipts with label issues, duplicates, and the 7 byte-identical to a test
+  receipt. The same receipts are used for every OCR engine. Their OCR text
+  comes from the same engine as the target, and their answers are the raw
+  ground-truth strings. Requires the SROIE manifest (`prepare.py`).
+- **No constrained decoding:** the model is free to produce invalid output,
+  because output-format failures are part of what is measured.
+- **Parsing** (`parse.py`): lenient. It strips code fences and surrounding
+  text, then fixes trailing commas and Python-style quotes, and records each
+  repair. The result is validated against the strict schema. Every problem is
+  recorded as a failure: `prompt_too_long`, `truncated`, `no_json`,
+  `invalid_json`, `not_object`, `missing_field`, `null_field`, `wrong_type`,
+  `extra_field`.
+  - `schema_valid`: the parsed object fits the schema.
+  - `strict_valid`: it also needed no repairs and wasn't cut off.
+  - `lenient`: the best usable values for scoring (numbers turned into
+    strings, extra keys dropped).
+- **Log:** `runs/extraction/<timestamp>/<receipt>.<engine>.json` (gitignored)
+  holds the messages sent, the raw model output, `finish_reason`, token
+  counts, timings, model settings, the parsed value, repairs, failures and
+  the lenient result. It also stores the path of the OCR run log it used.
 
 ## Key Results
 
