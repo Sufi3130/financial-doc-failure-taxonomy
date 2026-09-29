@@ -1,0 +1,163 @@
+{
+  "splits": {
+    "train": {
+      "pairs": 626,
+      "numbered_copies_ignored": 359,
+      "numbered_copies_not_identical_to_base": [],
+      "jpg_without_txt": [],
+      "txt_without_jpg": [],
+      "other_files": [],
+      "duplicate_image_groups": [
+        [
+          "X51005268262",
+          "X51005301659"
+        ],
+        [
+          "X51005301661",
+          "X51005303661"
+        ],
+        [
+          "X51005453801",
+          "X51009453801"
+        ],
+        [
+          "X51005453804",
+          "X51009453804"
+        ],
+        [
+          "X51006401723",
+          "X51007135037"
+        ]
+      ],
+      "fields": {
+        "missing": {
+          "address": 1
+        },
+        "empty": {
+          "total": 1
+        },
+        "unparsed": {}
+      },
+      "receipts_with_issues": {
+        "X51005433522": [
+          "empty:total"
+        ],
+        "X51005663280": [
+          "missing:address"
+        ]
+      }
+    },
+    "test": {
+      "pairs": 347,
+      "numbered_copies_ignored": 0,
+      "numbered_copies_not_identical_to_base": [],
+      "jpg_without_txt": [],
+      "txt_without_jpg": [],
+      "other_files": [],
+      "duplicate_image_groups": [
+        [
+          "X51005268275",
+          "X51005301666"
+        ],
+        [
+          "X51005447842",
+          "X51009447842"
+        ],
+        [
+          "X510056849111",
+          "X51005684949"
+        ]
+      ],
+      "fields": {
+        "missing": {},
+        "empty": {},
+        "unparsed": {}
+      },
+      "receipts_with_issues": {}
+    }
+  },
+  "cross_split_duplicate_groups": [
+    [
+      "test/X51006328937",
+      "train/X51006329399"
+    ],
+    [
+      "test/X51006328967",
+      "train/X51006332575"
+    ],
+    [
+      "test/X51006329388",
+      "train/X51006328913"
+    ],
+    [
+      "test/X51006401853",
+      "train/X51007135247"
+    ],
+    [
+      "test/X51009008095",
+      "train/X51006008095"
+    ],
+    [
+      "test/X51009453729",
+      "train/X51005453729"
+    ],
+    [
+      "test/X51009568881",
+      "train/X51005568881"
+    ]
+  ],
+  "duplicate_label_conflicts": [
+    {
+      "receipts": [
+        "test/X510056849111",
+        "test/X51005684949"
+      ],
+      "fields": [
+        "total"
+      ]
+    },
+    {
+      "receipts": [
+        "train/X51005301661",
+        "train/X51005303661"
+      ],
+      "fields": [
+        "address"
+      ]
+    },
+    {
+      "receipts": [
+        "train/X51006008095",
+        "test/X51009008095"
+      ],
+      "fields": [
+        "address"
+      ]
+    },
+    {
+      "receipts": [
+        "train/X51006328913",
+        "test/X51006329388"
+      ],
+      "fields": [
+        "company"
+      ]
+    },
+    {
+      "receipts": [
+        "train/X51007135247",
+        "test/X51006401853"
+      ],
+      "fields": [
+        "address"
+      ]
+    }
+  ],
+  "subset": {
+    "split": "test",
+    "n": 50,
+    "seed": 42,
+    "eligible": 344,
+    "rule": "test receipts, not a duplicate of a lower ID, no label issues"
+  }
+}

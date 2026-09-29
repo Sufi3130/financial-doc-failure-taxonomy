@@ -25,6 +25,11 @@ evaluation/datasets/*.zip
 # raw datasets (case-insensitive folder names on Windows)
 evaluation/datasets/**/raw/
 
+# Generated manifests contain ground-truth labels (no redistribution);
+# regenerate with prepare.py. ID lists and prepare_report.json are committed.
+evaluation/datasets/**/manifest.jsonl
+evaluation/datasets/**/subset_*.jsonl
+
 # Local model weights
 models/
 
