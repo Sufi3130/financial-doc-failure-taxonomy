@@ -24,11 +24,58 @@ financial document extraction using small local models.
 
 ## Setup
 
+The core stack runs on a laptop CPU with no GPU. Tested on Windows 11 with
+Python 3.12.6.
+
 ```bash
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+pip install -r requirements-later.txt   # optional: TrOCR, scikit-learn, Streamlit (M3+)
 ```
+
+### Windows setup notes
+
+- **Use the python.org CPython build** (3.12 recommended). MSYS2/MinGW or
+  Cygwin Pythons are not supported: `paddlepaddle` and `llama-cpp-python` do
+  not publish wheels for them.
+- **llama-cpp-python without a compiler:** `requirements.txt` points pip at the
+  prebuilt CPU wheel index
+  (`--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu`), so
+  a `win_amd64` wheel is installed and nothing is compiled. If pip falls back
+  to building from source (e.g. you changed the pinned version and no wheel
+  exists for it), install *Visual Studio Build Tools* with the "Desktop
+  development with C++" workload plus CMake, then reinstall.
+- **paddlepaddle** is the CPU build from PyPI. Do not install `paddlepaddle-gpu`.
+- **PaddleOCR on Windows CPU:** the pipeline creates PaddleOCR with
+  `enable_mkldnn=False`, which avoids a oneDNN crash in Paddle 3.x on Windows.
+- PowerShell may block `Activate.ps1`. Fix it with
+  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+- On first run, PaddleOCR downloads its detection and recognition models to
+  `~/.paddlex/` (needs internet once).
+
+### Download the model
+
+Phi-3-mini-4k-instruct, Q4 GGUF (~2.2 GB), into the gitignored `models/` folder:
+
+```bash
+mkdir models
+curl -L -o models/Phi-3-mini-4k-instruct-q4.gguf \
+  https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf
+```
+
+### Check the environment
+
+```bash
+python scripts/check_env.py
+```
+
+The script imports all core libraries, OCRs one SROIE receipt, runs one short
+generation with the GGUF model and prints timings. It ends with
+`[OK] environment check passed`. Datasets go under
+`evaluation/datasets/<name>/raw/` (see
+[evaluation/datasets/README.md](evaluation/datasets/README.md)). Raw data and
+model files are gitignored.
 
 ## Key Results
 

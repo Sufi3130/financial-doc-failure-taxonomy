@@ -1,19 +1,25 @@
+# Core M1/M2 stack: CPU-only, tested on Windows 11, Python 3.12.6 (python.org build)
+# llama-cpp-python needs the prebuilt CPU wheel index (see README "Windows setup")
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+
 # OCR
-paddleocr
-paddlepaddle
-transformers  # for TrOCR
+paddleocr==3.7.0
+paddlex==3.7.2
+paddlepaddle==3.3.1
 
 # LLM inference
-llama-cpp-python
+llama-cpp-python==0.3.35
+
+# Schema / validation
+pydantic==2.13.5
 
 # Data / eval
-numpy
-pandas
-scikit-learn
-
-# App
-streamlit
+numpy==2.3.5
+pandas==3.0.5
 
 # Utils
-pillow
-tqdm
+pillow==12.3.0
+tqdm==4.70.0
+
+# Testing
+pytest

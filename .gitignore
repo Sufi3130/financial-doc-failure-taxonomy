@@ -22,3 +22,13 @@ evaluation/datasets/*.zip
 # IDE
 .vscode/
 .idea/
+# raw datasets (case-insensitive folder names on Windows)
+evaluation/datasets/**/raw/
+
+# Local model weights
+models/
+
+# Run logs
+logs/
+runs/
+*.log
