@@ -6,6 +6,7 @@
 paddleocr==3.7.0
 paddlex==3.7.2
 paddlepaddle==3.3.1
+pytesseract==0.3.13  # also needs the Tesseract 5 binary (see README "Windows setup")
 
 # LLM inference
 llama-cpp-python==0.3.35

@@ -62,7 +62,7 @@ as a first-class concern. Two things worth noting for my own design:
 - Their "OCR stage" is really a pre-processing stage plus OCR, not just OCR
   — the deskew/contrast work is treated as essential to downstream accuracy,
   and I should probably budget time for equivalent pre-processing rather
-  than assuming raw scans go straight into PaddleOCR/TrOCR.
+  than assuming raw scans go straight into PaddleOCR/Tesseract.
 - They don't do a systematic, quantified failure taxonomy — their error
   analysis is three named categories with no frequency counts. That gap is
   basically what I'm trying to fill for financial documents specifically.

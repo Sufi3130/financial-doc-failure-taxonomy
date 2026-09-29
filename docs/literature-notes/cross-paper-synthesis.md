@@ -30,7 +30,7 @@ general benchmarks don't cover.
 
 | | OCBC (multi-stage) | Fiscal LLM (Karnataka) | My proposed design |
 |---|---|---|---|
-| Vision/OCR stage | Pre-processing + PaddleOCR v3 | None — image fed directly to LLM | PaddleOCR/TrOCR, + PaddleOCR-VL as ablation |
+| Vision/OCR stage | Pre-processing + PaddleOCR v3 | None — image fed directly to LLM | PaddleOCR + Tesseract, + PaddleOCR-VL as ablation |
 | Retrieval/filtering | BM25 keyword retrieval | Sequential context carry-forward, no filtering | None currently |
 | Extraction model | Compact VLM (8B, GPU) | Frontier LLM via API (Gemini 2.5 Pro) | Small quantized local LLM (Phi-3 Mini / Mistral 7B), CPU |
 | Output format | Structured fields | 5 CSV schema types | JSON |

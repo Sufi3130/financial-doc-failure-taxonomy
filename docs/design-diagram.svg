@@ -36,7 +36,7 @@
 
   <rect x="150" y="240" width="240" height="55" rx="8" fill="#dcecdc" stroke="#3f7d3f" stroke-width="1.5"/>
   <text x="270" y="263" text-anchor="middle" font-size="13" fill="#1a1a1a">OCR Engine</text>
-  <text x="270" y="280" text-anchor="middle" font-size="10" fill="#555">PaddleOCR / TrOCR</text>
+  <text x="270" y="280" text-anchor="middle" font-size="10" fill="#555">PaddleOCR / Tesseract</text>
 
   <line x1="270" y1="295" x2="270" y2="325" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>
 

@@ -1,7 +1,6 @@
 # M3+ packages, not needed for the core OCR -> LLM pipeline
 # pip install -r requirements-later.txt
 
-transformers  # for TrOCR
 scikit-learn
 
 # App

@@ -1,7 +1,7 @@
-"""Smoke test for the local, GPU-free stack: PaddleOCR -> Phi-3 Mini Q4 GGUF.
+"""Smoke test for the local, GPU-free stack: OCR (PaddleOCR, Tesseract) -> Phi-3 Mini Q4 GGUF.
 
-Imports all core libs, OCRs one SROIE receipt, runs one short GGUF generation
-and prints timings. Exits non-zero on the first failure.
+Imports all core libs, OCRs one SROIE receipt with every OCR engine, runs one
+short GGUF generation and prints timings. Exits non-zero on the first failure.
 
 Usage:
     python scripts/check_env.py [--image PATH] [--model PATH]
@@ -9,20 +9,21 @@ Usage:
 
 import argparse
 import importlib
-import os
 import platform
 import sys
 import time
 from pathlib import Path
 
-# Skip PaddleX's online model-host check on every run
-os.environ.setdefault("PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK", "True")
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+from src.ocr import ENGINES, get_engine, reading_order  # noqa: E402
+
 DEFAULT_IMAGE = REPO_ROOT / "evaluation/datasets/SROIE/raw/test/X00016469670.jpg"
 DEFAULT_MODEL = REPO_ROOT / "models/Phi-3-mini-4k-instruct-q4.gguf"
 
-LIBS = ["paddle", "paddleocr", "llama_cpp", "pydantic", "numpy", "pandas", "PIL", "tqdm", "pytest"]
+LIBS = ["paddle", "paddleocr", "pytesseract", "llama_cpp", "pydantic", "numpy", "pandas", "pyarrow",
+        "PIL", "tqdm", "pytest"]
 
 
 def fail(msg):
@@ -47,36 +48,29 @@ def check_imports():
 
 
 def check_ocr(image):
-    print(f"\n== OCR ({image.name})")
+    """Run every registered engine; return PaddleOCR's reading-order text for the LLM check."""
     if not image.is_file():
         fail(f"receipt image not found: {image}")
 
-    from paddleocr import PaddleOCR
-
-    t0 = time.perf_counter()
-    ocr = PaddleOCR(
-        use_doc_orientation_classify=False,
-        use_doc_unwarping=False,
-        use_textline_orientation=True,
-        lang="en",
-        enable_mkldnn=False,
-    )
-    t_load = time.perf_counter() - t0
-
-    t0 = time.perf_counter()
-    result = ocr.predict(str(image))
-    t_ocr = time.perf_counter() - t0
-
-    texts = [t for res in result for t in res["rec_texts"]]
-    if not texts:
-        fail("OCR returned no text lines")
-
-    print(f"  lines: {len(texts)}  first: {texts[:3]}")
-    print(f"  model load {t_load:.1f}s, inference {t_ocr:.1f}s")
-    return texts, {"ocr_load": t_load, "ocr_infer": t_ocr}
+    texts, timings = {}, {}
+    for name in ENGINES:
+        print(f"\n== OCR: {name} ({image.name})")
+        try:
+            result = get_engine(name).recognize(image)
+        except Exception as e:
+            fail(f"{name}: {e}")
+        if not result.lines:
+            fail(f"{name} returned no text lines")
+        texts[name] = reading_order(result.lines).text
+        print(f"  {result.engine} {result.engine_version}: {len(result.lines)} pieces, "
+              f"first: {[ln.text for ln in result.lines[:3]]}")
+        print(f"  load {result.timings['load_s']:.1f}s, ocr {result.timings['ocr_s']:.1f}s")
+        timings[f"{name}_load"] = result.timings["load_s"]
+        timings[f"{name}_ocr"] = result.timings["ocr_s"]
+    return texts["paddleocr"], timings
 
 
-def check_llm(model, ocr_texts):
+def check_llm(model, ocr_text):
     print(f"\n== LLM ({model.name})")
     if not model.is_file():
         fail(f"GGUF model not found: {model} (see README 'Download the model')")
@@ -87,7 +81,7 @@ def check_llm(model, ocr_texts):
     llm = Llama(model_path=str(model), n_ctx=2048, n_gpu_layers=0, verbose=False)
     t_load = time.perf_counter() - t0
 
-    receipt = "\n".join(ocr_texts[:15])
+    receipt = "\n".join(ocr_text.splitlines()[:15])
     messages = [
         {"role": "user", "content": f"Receipt text:\n{receipt}\n\nWhat is the store name? Answer in a few words."},
     ]
@@ -116,13 +110,13 @@ def main():
 
     t_start = time.perf_counter()
     check_imports()
-    texts, timings = check_ocr(args.image)
-    timings |= check_llm(args.model, texts)
+    text, timings = check_ocr(args.image)
+    timings |= check_llm(args.model, text)
 
     print("\n== Timings (s)")
     for k, v in timings.items():
-        print(f"  {k:<10} {v:6.1f}")
-    print(f"  {'total':<10} {time.perf_counter() - t_start:6.1f}")
+        print(f"  {k:<15} {v:6.1f}")
+    print(f"  {'total':<15} {time.perf_counter() - t_start:6.1f}")
     print("\n[OK] environment check passed")
 
 
