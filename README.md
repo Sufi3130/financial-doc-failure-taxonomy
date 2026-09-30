@@ -14,7 +14,9 @@ financial document extraction using small local models.
 
 ## Repo structure
 
-- `docs/` — proposal, design diagrams, literature notes, milestone tracking
+- `docs/`: [architecture.md](docs/architecture.md) (components, data flow,
+  formats, design decisions), the proposal design diagram, literature notes,
+  milestone tracking
 - `src/ocr/` — OCR engines (PaddleOCR, Tesseract) behind one interface, reading-order text, run logs
 - `src/extraction/` — LLM prompt templates, JSON schema, extraction logic
 - `src/vlm_ablation/` — OCR-free VLM comparison pipeline
@@ -325,4 +327,17 @@ Results go to `evaluation/results/<run_id>/`:
 
 ## Status
 
-See [docs/milestones.md](docs/milestones.md) and the repo's Issues/Milestones tabs for current progress.
+- **M1 (Aug 31)** ✅ Topic, background research, design diagram, repo setup,
+  skeleton.
+- **M2 (Sep 30)** ✅ The core pipeline works end to end on a laptop CPU:
+  - PaddleOCR / Tesseract → Phi-3 Mini Q4 → validated JSON
+  - dataset preparation (SROIE, CORD)
+  - batch runner with a per-receipt run log
+  - evaluator and baseline results (see Key Results)
+  - 111 tests with CI
+  - [architecture documentation](docs/architecture.md)
+- **Next (M3):** failure taxonomy v0 (issue #13), Streamlit UI, performance
+  improvements, methodology and results drafts.
+
+Details: [docs/milestones.md](docs/milestones.md) and the repo's
+Issues/Milestones tabs.
