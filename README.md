@@ -209,16 +209,97 @@ Options: `--engine paddleocr|tesseract|all` (default `paddleocr`),
     failed ones by appending a new line. Use the last line per
     engine + receipt.
 
+## Evaluation
+
+```bash
+python evaluation/evaluate.py runs/pipeline/<run> --manifest evaluation/datasets/SROIE/subset_test_50.jsonl
+```
+
+`evaluation/evaluate.py` scores a run log against a manifest. It uses the
+last row per engine and receipt, and **every receipt in the manifest counts**:
+a failed, empty or missing output counts as wrong. Only annotated fields are
+scored (CORD: `total` only).
+
+- **Strict match:** the prediction equals the label exactly (after trimming).
+- **Normalised match:**
+  - date and total go through `evaluation/normalize.py`, using the record's
+    locale;
+  - company and address ignore case, spaces and punctuation.
+- **Token F1** (company, address): partial credit for boundary errors.
+- **Value in OCR text:** splits misses into OCR misses (the value was never
+  read) and LLM misses (it was read but not extracted correctly).
+- **Schema compliance:** `strict_valid` = clean JSON that fits the schema
+  with no repairs; `schema_valid` = fits the schema after lenient repairs.
+- **Latency:** seconds per page, median and mean.
+
+Results go to `evaluation/results/<run_id>/`:
+
+- `summary.json`: all metrics
+- `per_receipt.csv`: match flags, failure types and timings per receipt (no
+  text)
+- `per_receipt_detail.jsonl`: the same plus predicted and ground-truth text.
+  This one is gitignored because it contains labels.
+
 ## Key Results
 
-_Not yet available — to be filled in once evaluation on SROIE/CORD is
-complete (target: Milestone 2)._
+**Setup:**
 
-| Metric | OCR+LLM pipeline | OCR-free VLM ablation |
-|---|---|---|
-| Field-level accuracy | TBD | TBD |
-| Schema compliance rate | TBD | TBD |
-| Avg. latency / page (CPU) | TBD | TBD |
+- Phi-3-mini-4k-instruct Q4 GGUF (llama-cpp-python, CPU), prompt `v1`,
+  2-shot (SROIE train `X51005676545`, `X51005361946`; few-shot seed 42),
+  temperature 0.
+- **SROIE:** 50-receipt test subset `subset_test_50` (seed 42), run
+  `20260930-063807`.
+- **CORD v2:** 50-receipt validation + test subset `subset_valtest_50`
+  (seed 42), run `20260930-092942`. Same prompt and examples; only `total` is
+  scored, normalised as rupiah.
+- Both runs: commit `2e9c77a`, Intel 4-core/8-thread laptop CPU on AC power,
+  fresh OCR (no cache).
+
+**SROIE Task 3**: normalised match % (strict match % in brackets)
+
+| Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 | OCR-free VLM ablation |
+|---|---|---|---|
+| Company | 44.0 (36.0) | 44.0 (38.0) | TBD |
+| Date | 82.0 (70.0) | 70.0 (46.0) | TBD |
+| Address | 42.0 (6.0) | 34.0 (8.0) | TBD |
+| Total | 92.0 (76.0) | 74.0 (60.0) | TBD |
+| All 4 fields correct | 26.0 | 18.0 | TBD |
+| Token F1 company / address | 62.4 / 68.4 | 70.6 / 77.6 | TBD |
+| Schema compliance rate (strict-valid) | 96.0 % | 96.0 % | TBD |
+| Latency / page (CPU), median (mean) | 121.8 s (150.0 s) | 51.0 s (52.3 s) | TBD |
+| ↳ OCR / LLM, median | 74.0 s / 43.9 s | 1.0 s / 49.9 s | TBD |
+
+**CORD v2 total**: normalised match % (strict match % in brackets)
+
+| Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 | OCR-free VLM ablation |
+|---|---|---|---|
+| Total | 84.0 (76.0) | 14.0 (12.0) | TBD |
+| Schema compliance rate (strict-valid) | 100.0 % | 68.0 % | TBD |
+| Latency / page (CPU), median (mean) | 45.1 s (64.5 s) | 11.8 s (15.9 s) | TBD |
+
+**Notes:**
+
+- The subsets are small (50 receipts), so each receipt is 2 percentage points.
+- Labels are used as released, with no manual corrections. Some SROIE labels
+  contain typos (e.g. a postcode `B1750` for `81750`), and 5 duplicate-image
+  groups have conflicting labels, so a perfect extractor would not reach
+  100 %.
+- The strict address score is low mainly because of comma, spacing and
+  boundary differences. Normalised match and token F1 show how much of the
+  address was right.
+- Latency is measured with the model already loaded and the few-shot prompt
+  prefix already read. It excludes model load (~4 s) and the one-off warm-up
+  per engine (~70–100 s).
+  - 9 of the 50 SROIE receipts are 35 MP scans, which take ~240–315 s of
+    PaddleOCR each; that's why the mean is well above the median.
+  - CORD prompts are shorter, so the LLM is faster there.
+- **Reproducibility:** an earlier run of the same SROIE subset
+  (`20260930-030537`) produced identical OCR text and identical raw LLM
+  output for all 100 receipt × engine runs. Only its timings differed: that
+  run was partly on battery, and the laptop slept once.
+- Tesseract fails badly on CORD (camera photos): the total is in its OCR text
+  for only 34 % of receipts, and on 12 receipts it produced no JSON.
+- Per-receipt results: [`evaluation/results/`](evaluation/results/).
 
 ## Status
 

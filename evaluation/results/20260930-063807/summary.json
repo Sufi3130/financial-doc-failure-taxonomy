@@ -1,0 +1,189 @@
+{
+ "run_id": "20260930-063807",
+ "manifest": "evaluation/datasets/SROIE/subset_test_50.jsonl",
+ "manifest_sha256": "48204e93a02fa8cee5fcc75134d29a8ad0d6fc1b619c06c35b39ea910265a040",
+ "n_receipts": 50,
+ "run": {
+  "started": "2026-09-30T06:38:07",
+  "finished": "2026-09-30T09:29:40",
+  "command": "python -m src.run --manifest evaluation\\datasets\\SROIE\\subset_test_50.jsonl --engine all --no-cache",
+  "git": {
+   "commit": "2e9c77a170508a362261d5d1abf6bebfedb8fb82",
+   "uncommitted_changes": []
+  },
+  "prompt_version": "v1",
+  "shots": 2,
+  "fewshot_seed": 42,
+  "ocr_cache": false
+ },
+ "fewshot_ids": {
+  "paddleocr": [
+   "X51005676545",
+   "X51005361946"
+  ],
+  "tesseract": [
+   "X51005676545",
+   "X51005361946"
+  ]
+ },
+ "engines": {
+  "paddleocr": {
+   "receipts": 50,
+   "errors": 0,
+   "fields": {
+    "company": {
+     "scored": 50,
+     "strict_acc": 36.0,
+     "normalized_acc": 44.0,
+     "in_ocr": 70.0,
+     "ocr_miss": 15,
+     "llm_miss_given_in_ocr": 14,
+     "mean_token_f1": 62.4
+    },
+    "date": {
+     "scored": 50,
+     "strict_acc": 70.0,
+     "normalized_acc": 82.0,
+     "in_ocr": 90.0,
+     "ocr_miss": 5,
+     "llm_miss_given_in_ocr": 6
+    },
+    "address": {
+     "scored": 50,
+     "strict_acc": 6.0,
+     "normalized_acc": 42.0,
+     "in_ocr": 68.0,
+     "ocr_miss": 16,
+     "llm_miss_given_in_ocr": 13,
+     "mean_token_f1": 68.4
+    },
+    "total": {
+     "scored": 50,
+     "strict_acc": 76.0,
+     "normalized_acc": 92.0,
+     "in_ocr": 96.0,
+     "ocr_miss": 2,
+     "llm_miss_given_in_ocr": 3
+    }
+   },
+   "all_fields_normalized_acc": 26.0,
+   "schema": {
+    "strict_valid_rate": 96.0,
+    "schema_valid_rate": 96.0,
+    "failure_counts": {
+     "invalid_json": 2,
+     "truncated": 2,
+     "null_field": 1
+    }
+   },
+   "latency_s": {
+    "ocr_s": {
+     "mean": 103.6,
+     "median": 74.0,
+     "n": 50
+    },
+    "llm_s": {
+     "mean": 46.5,
+     "median": 43.9,
+     "n": 50
+    },
+    "llm_prompt_s": {
+     "mean": 29.5,
+     "median": 27.2,
+     "n": 50
+    },
+    "llm_gen_s": {
+     "mean": 16.9,
+     "median": 15.4,
+     "n": 50
+    },
+    "total_s": {
+     "mean": 150.0,
+     "median": 121.8,
+     "n": 50
+    },
+    "power": {
+     "ac": 50
+    }
+   }
+  },
+  "tesseract": {
+   "receipts": 50,
+   "errors": 0,
+   "fields": {
+    "company": {
+     "scored": 50,
+     "strict_acc": 38.0,
+     "normalized_acc": 44.0,
+     "in_ocr": 50.0,
+     "ocr_miss": 25,
+     "llm_miss_given_in_ocr": 4,
+     "mean_token_f1": 70.6
+    },
+    "date": {
+     "scored": 50,
+     "strict_acc": 46.0,
+     "normalized_acc": 70.0,
+     "in_ocr": 70.0,
+     "ocr_miss": 15,
+     "llm_miss_given_in_ocr": 1
+    },
+    "address": {
+     "scored": 50,
+     "strict_acc": 8.0,
+     "normalized_acc": 34.0,
+     "in_ocr": 46.0,
+     "ocr_miss": 27,
+     "llm_miss_given_in_ocr": 6,
+     "mean_token_f1": 77.6
+    },
+    "total": {
+     "scored": 50,
+     "strict_acc": 60.0,
+     "normalized_acc": 74.0,
+     "in_ocr": 80.0,
+     "ocr_miss": 10,
+     "llm_miss_given_in_ocr": 3
+    }
+   },
+   "all_fields_normalized_acc": 18.0,
+   "schema": {
+    "strict_valid_rate": 96.0,
+    "schema_valid_rate": 96.0,
+    "failure_counts": {
+     "no_json": 2
+    }
+   },
+   "latency_s": {
+    "ocr_s": {
+     "mean": 1.2,
+     "median": 1.0,
+     "n": 50
+    },
+    "llm_s": {
+     "mean": 51.1,
+     "median": 49.9,
+     "n": 50
+    },
+    "llm_prompt_s": {
+     "mean": 32.5,
+     "median": 31.3,
+     "n": 50
+    },
+    "llm_gen_s": {
+     "mean": 18.6,
+     "median": 18.7,
+     "n": 50
+    },
+    "total_s": {
+     "mean": 52.3,
+     "median": 51.0,
+     "n": 50
+    },
+    "power": {
+     "ac": 50
+    }
+   }
+  }
+ }
+}

@@ -29,6 +29,7 @@ evaluation/datasets/**/raw/
 # regenerate with prepare.py. ID lists and prepare_report.json are committed.
 evaluation/datasets/**/manifest.jsonl
 evaluation/datasets/**/subset_*.jsonl
+evaluation/results/**/per_receipt_detail.jsonl
 
 # Local model weights
 models/
