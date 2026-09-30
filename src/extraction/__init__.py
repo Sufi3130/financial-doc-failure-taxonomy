@@ -1,18 +1,18 @@
 """Extraction stage: OCR text -> Phi-3 Mini (llama-cpp, CPU) -> validated Receipt JSON.
 
-    from src.extraction import LocalLLM, extract
-    record = extract(ocr_text, LocalLLM(), examples)
-    record.generation.raw_output, record.outcome.failures, record.outcome.lenient
+    from src.extraction import LocalLLM, build_messages, parse_output, to_phi3
+    gen = LocalLLM().generate(to_phi3(build_messages(ocr_text, examples)))
+    outcome = parse_output(gen.raw_output, gen.finish_reason)
+
+The end-to-end command (OCR -> LLM -> JSON, single image or batch) is src/run.py.
 """
 
 from .llm import Generation, LLMSettings, LocalLLM
 from .parse import Failure, ParseOutcome, parse_output
-from .pipeline import ExtractionRecord, extract, save_extraction
 from .prompts import PROMPT_VERSION, build_messages, to_phi3
 from .schema import FIELDS, Receipt
 
 __all__ = [
-    "FIELDS", "PROMPT_VERSION", "ExtractionRecord", "Failure", "Generation", "LLMSettings",
-    "LocalLLM", "ParseOutcome", "Receipt", "build_messages", "extract", "parse_output",
-    "save_extraction", "to_phi3",
+    "FIELDS", "PROMPT_VERSION", "Failure", "Generation", "LLMSettings", "LocalLLM",
+    "ParseOutcome", "Receipt", "build_messages", "parse_output", "to_phi3",
 ]

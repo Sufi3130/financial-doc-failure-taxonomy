@@ -41,6 +41,8 @@ def select_fewshot_ids(records, k=2, seed=42):
 
 def load_examples(engine, k=2, seed=42, records=None):
     """Return (ids, [(reading-order OCR text, raw ground-truth dict), ...])."""
+    if k == 0:
+        return [], []
     records = records or load_manifest()
     by_id = {r["id"]: r for r in records if r["split"] == "train"}
     ids = select_fewshot_ids(records, k, seed)

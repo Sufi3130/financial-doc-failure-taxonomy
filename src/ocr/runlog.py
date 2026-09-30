@@ -45,19 +45,21 @@ def load_run_log(path):
 CACHE_DIR = RUNS_DIR / "cache" / "ocr"
 
 
-def cached_ocr(engine, image_path, receipt_id=None, cache_dir=CACHE_DIR):
+def cached_ocr(engine, image_path, receipt_id=None, cache_dir=CACHE_DIR, force=False):
     """OCR an image once per engine and settings; reuse the saved run log after that.
 
     Returns (OCRResult, ReadingOrder, log_path, from_cache). A cached log is
     reused only if it was made from the same image path with the same engine
-    settings. Delete runs/cache/ after upgrading an OCR engine.
+    settings; its timings are the ones measured when the OCR actually ran.
+    force=True re-runs OCR and overwrites the cache. Delete runs/cache/ after
+    upgrading an OCR engine.
     """
     from .layout import reading_order
 
     image_path = Path(image_path)
     receipt_id = receipt_id or image_path.stem
     path = Path(cache_dir) / engine.name / f"{receipt_id}.{engine.name}.json"
-    if path.is_file():
+    if path.is_file() and not force:
         result, reading = load_run_log(path)
         if result.settings == engine.settings() and Path(result.image_path).resolve() == image_path.resolve():
             return result, reading, path, True

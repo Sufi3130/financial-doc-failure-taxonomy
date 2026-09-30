@@ -28,6 +28,11 @@ class Generation(BaseModel):
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     seconds: float
+    # llama.cpp perf counters: only the tokens actually evaluated count, so a
+    # reused prompt prefix (same few-shot examples) shows up as fewer tokens
+    prompt_tokens_evaluated: int | None = None
+    prompt_eval_s: float | None = None
+    gen_s: float | None = None
 
 
 class LocalLLM:
@@ -55,23 +60,43 @@ class LocalLLM:
                           n_gpu_layers=0, seed=s.seed, verbose=False)
         self.load_s = time.perf_counter() - t0
 
-    def generate(self, messages) -> Generation:
+    def _perf(self, reset=False):
+        """llama.cpp context perf counters, or None if unavailable."""
+        try:
+            import llama_cpp
+
+            ctx = self._llm._ctx.ctx
+            if reset:
+                llama_cpp.llama_perf_context_reset(ctx)
+                return None
+            return llama_cpp.llama_perf_context(ctx)
+        except Exception:
+            return None
+
+    def generate(self, messages, max_tokens=None) -> Generation:
         """messages must already be in a form the chat template accepts (see prompts.to_phi3)."""
         self.load()
         s = self.settings
+        self._perf(reset=True)
         t0 = time.perf_counter()
         try:
             out = self._llm.create_chat_completion(
-                messages=messages, temperature=s.temperature, seed=s.seed, max_tokens=s.max_tokens)
+                messages=messages, temperature=s.temperature, seed=s.seed,
+                max_tokens=max_tokens or s.max_tokens)
         except ValueError as e:
             if "context window" not in str(e):
                 raise
             return Generation(raw_output=None, finish_reason="prompt_too_long",
                               seconds=round(time.perf_counter() - t0, 3))
+        seconds = round(time.perf_counter() - t0, 3)
+        perf = self._perf()
         return Generation(
             raw_output=out["choices"][0]["message"]["content"],
             finish_reason=out["choices"][0]["finish_reason"],
             prompt_tokens=out["usage"]["prompt_tokens"],
             completion_tokens=out["usage"]["completion_tokens"],
-            seconds=round(time.perf_counter() - t0, 3),
+            seconds=seconds,
+            prompt_tokens_evaluated=perf.n_p_eval if perf else None,
+            prompt_eval_s=round(perf.t_p_eval_ms / 1000, 3) if perf else None,
+            gen_s=round(perf.t_eval_ms / 1000, 3) if perf else None,
         )

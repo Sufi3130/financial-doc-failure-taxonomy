@@ -132,9 +132,7 @@ prompt_text = reading_order(result.lines).text
 Mini Q4 via llama-cpp-python. It runs on CPU with `temperature=0`, a fixed
 seed, `n_ctx=4096` and `max_tokens=256`.
 
-```bash
-python -m src.extraction evaluation/datasets/SROIE/raw/test/X00016469670.jpg --engine paddleocr --shots 2
-```
+It is run through the pipeline command below.
 
 - **Prompt** (`prompts.py`, version recorded in every log): instructions plus
   few-shot examples, then the target receipt. Phi-3's GGUF chat template
@@ -158,10 +156,58 @@ python -m src.extraction evaluation/datasets/SROIE/raw/test/X00016469670.jpg --e
   - `strict_valid`: it also needed no repairs and wasn't cut off.
   - `lenient`: the best usable values for scoring (numbers turned into
     strings, extra keys dropped).
-- **Log:** `runs/extraction/<timestamp>/<receipt>.<engine>.json` (gitignored)
-  holds the messages sent, the raw model output, `finish_reason`, token
-  counts, timings, model settings, the parsed value, repairs, failures and
-  the lenient result. It also stores the path of the OCR run log it used.
+
+## Pipeline: one command, single receipt or batch
+
+`src/run.py` runs image → OCR → LLM → validated JSON:
+
+```bash
+python -m src.run evaluation/datasets/SROIE/raw/test/X00016469670.jpg            # one receipt
+python -m src.run --manifest evaluation/datasets/SROIE/subset_test_50.jsonl --engine all
+python -m src.run --manifest ... --resume runs/pipeline/<run>                   # continue a run
+```
+
+Options: `--engine paddleocr|tesseract|all` (default `paddleocr`),
+`--shots N` (default 2), `--seed`, `--limit N`, `--no-cache`.
+
+- **Run log:** `runs/pipeline/<timestamp>/run.jsonl` (gitignored). Each
+  receipt is appended as one line as soon as it finishes, so an interrupted
+  run loses nothing. A line holds:
+  - `receipt_id`, `split`, `engine`, `image`
+  - `ocr`: reading-order text, row map and all pieces with boxes and confidences
+  - `llm`: raw output, `finish_reason`, token counts
+  - `outcome`: repairs, failures, `schema_valid` / `strict_valid`, lenient values
+  - `timings` and `error`
+
+  Ground truth is not copied; the evaluator joins on `receipt_id`.
+- **`run_meta.json`** next to it holds:
+  - the command, git commit and uncommitted files
+  - library versions, CPU, model file and settings
+  - prompt version, few-shot IDs and the exact prompt prefix for each engine
+  - OCR settings, the warm-up and a summary (validity counts, failure and repair
+    counts, mean/median timings)
+- **Timings per page (CPU):** `ocr_s`, `llm_s` (split into `llm_prompt_s`
+  and `llm_gen_s` from llama.cpp's counters), `parse_s`, `total_s` =
+  OCR + LLM + parse, and `wall_s`.
+  - The model is loaded once. Before each engine's receipts, a warm-up call
+    reads the fixed prompt prefix (instructions + few-shot examples), so every
+    page is timed warm. `llm.prompt_tokens_evaluated` shows how many prompt
+    tokens were actually read.
+  - With the OCR cache (default), a cached receipt's `ocr_s` is the time
+    measured when its OCR really ran (`ocr_cached: true`).
+  - **Measure on AC power.** Laptops throttle the CPU on battery. Each line
+    records `power` (`ac` / `battery`), and the command warns when it starts
+    on battery. While a run is in progress the command stops Windows from
+    sleeping on idle (`SetThreadExecutionState`). Closing the lid still
+    suspends the laptop.
+- **Batch behaviour:**
+  - Engines run one after another (all receipts per engine) so the prompt
+    prefix stays reusable.
+  - An error on one receipt is logged (`stage`, `type`, `message`) and the
+    batch continues.
+  - `--resume` skips receipts already logged without an error, and retries
+    failed ones by appending a new line. Use the last line per
+    engine + receipt.
 
 ## Key Results
 
