@@ -1,0 +1,6 @@
+{
+    "company": "DELTA SDN BHD",
+    "date": "1/1/2018",
+    "address": "NO 5",
+    "total": "1.00"
+}

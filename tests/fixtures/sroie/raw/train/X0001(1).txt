@@ -1,0 +1,6 @@
+{
+    "company": "ALPHA SDN BHD",
+    "date": "25/12/2018",
+    "address": "NO 1, JALAN A",
+    "total": "RM 9.00"
+}

@@ -1,0 +1,6 @@
+{
+    "company": "EPSILON",
+    "date": "02/JAN/2017",
+    "address": "NO 7",
+    "total": "$8.20"
+}

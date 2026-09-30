@@ -1,0 +1,5 @@
+{
+    "company": "BETA",
+    "date": "05 MAR 2018",
+    "total": "12.50"
+}

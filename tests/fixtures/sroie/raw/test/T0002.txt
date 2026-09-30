@@ -1,0 +1,6 @@
+{
+    "company": "ETA",
+    "date": "OCT 3, 2016",
+    "address": "NO 12",
+    "total": "RM41.45"
+}

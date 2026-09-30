@@ -1,0 +1,8 @@
+# Minimal dependencies for the test suite (no PaddleOCR, llama-cpp, Tesseract or model needed)
+# pip install -r requirements-test.txt && python -m pytest tests -q
+
+pytest==9.1.1
+pydantic==2.13.5
+pillow==12.3.0
+pyarrow==25.0.1
+numpy==2.3.5

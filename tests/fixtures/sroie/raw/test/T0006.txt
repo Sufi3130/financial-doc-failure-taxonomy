@@ -1,0 +1,6 @@
+{
+    "company": "IOTA",
+    "date": "(06/12/2016)",
+    "address": "NO 16",
+    "total": "RM 3.90"
+}

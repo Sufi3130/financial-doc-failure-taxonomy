@@ -1,0 +1,5 @@
+{
+ "R1": "```json\n{\"company\": \"OJC MARKETING SDN BHD\", \"date\": \"15/01/2019\", \"address\": \"NO 2, JALAN BAYU 4\", \"total\": \"193.00\"}\n```",
+ "R2": "{\"company\": \"MR. D.I EXERCISE 1:\n\nGiven the receipt OCR text, extract",
+ "R3": "Since the OCR text provided is incomplete, I cannot generate a JSON object."
+}

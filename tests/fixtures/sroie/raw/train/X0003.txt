@@ -1,0 +1,6 @@
+{
+    "company": "GAMMA",
+    "date": "2018-03-23",
+    "address": "NO 3",
+    "total": ""
+}
