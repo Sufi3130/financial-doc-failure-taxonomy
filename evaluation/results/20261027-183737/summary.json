@@ -1,0 +1,209 @@
+{
+ "run_id": "20261027-183737",
+ "manifest": "evaluation/datasets/CORD/subset_valtest_50.jsonl",
+ "manifest_sha256": "1b15d5130b980e4aec0554d7be199da96a15d2ec02c8762dbbd72b3d74d0791d",
+ "n_receipts": 50,
+ "run": {
+  "started": "2026-10-27T18:37:37",
+  "finished": "2026-10-27T19:51:33",
+  "command": "python -m src.run --manifest evaluation\\datasets\\CORD\\subset_valtest_50.jsonl --engine all --no-cache",
+  "git": {
+   "commit": "0684d6ca2fa5bac5fb5f94e9fb7bee7a0f964fea",
+   "uncommitted_changes": []
+  },
+  "prompt_version": "v1",
+  "shots": 2,
+  "fewshot_seed": 42,
+  "ocr_cache": false
+ },
+ "fewshot_ids": {
+  "paddleocr": [
+   "train_091",
+   "train_025"
+  ],
+  "tesseract": [
+   "train_091",
+   "train_025"
+  ]
+ },
+ "engines": {
+  "paddleocr": {
+   "receipts": 50,
+   "errors": 0,
+   "fields": {
+    "total": {
+     "scored": 50,
+     "strict_acc": 80.0,
+     "strict_acc_ci95": [
+      67.0,
+      88.8
+     ],
+     "normalized_acc": 96.0,
+     "normalized_acc_ci95": [
+      86.5,
+      98.9
+     ],
+     "in_ocr": 96.0,
+     "ocr_miss": 2,
+     "llm_miss_given_in_ocr": 2
+    }
+   },
+   "all_fields_normalized_acc": 96.0,
+   "all_fields_normalized_acc_ci95": [
+    86.5,
+    98.9
+   ],
+   "schema": {
+    "strict_valid_rate": 98.0,
+    "strict_valid_rate_ci95": [
+     89.5,
+     99.6
+    ],
+    "schema_valid_rate": 98.0,
+    "schema_valid_rate_ci95": [
+     89.5,
+     99.6
+    ],
+    "failure_counts": {
+     "null_field": 49,
+     "invalid_json": 1,
+     "truncated": 1
+    }
+   },
+   "latency_s": {
+    "ocr_s": {
+     "mean": 60.7,
+     "median": 36.3,
+     "p90": 171.3,
+     "min": 16.7,
+     "max": 306.5,
+     "n": 50
+    },
+    "llm_s": {
+     "mean": 15.0,
+     "median": 13.2,
+     "p90": 20.5,
+     "min": 8.0,
+     "max": 55.1,
+     "n": 50
+    },
+    "llm_prompt_s": {
+     "mean": 8.0,
+     "median": 7.1,
+     "p90": 11.2,
+     "min": 2.8,
+     "max": 17.9,
+     "n": 50
+    },
+    "llm_gen_s": {
+     "mean": 7.0,
+     "median": 6.0,
+     "p90": 8.6,
+     "min": 4.2,
+     "max": 45.9,
+     "n": 50
+    },
+    "total_s": {
+     "mean": 75.7,
+     "median": 51.4,
+     "p90": 184.7,
+     "min": 27.0,
+     "max": 331.2,
+     "n": 50
+    },
+    "power": {
+     "ac": 50
+    }
+   }
+  },
+  "tesseract": {
+   "receipts": 50,
+   "errors": 0,
+   "fields": {
+    "total": {
+     "scored": 50,
+     "strict_acc": 20.0,
+     "strict_acc_ci95": [
+      11.2,
+      33.0
+     ],
+     "normalized_acc": 26.0,
+     "normalized_acc_ci95": [
+      15.9,
+      39.6
+     ],
+     "in_ocr": 34.0,
+     "ocr_miss": 33,
+     "llm_miss_given_in_ocr": 4
+    }
+   },
+   "all_fields_normalized_acc": 26.0,
+   "all_fields_normalized_acc_ci95": [
+    15.9,
+    39.6
+   ],
+   "schema": {
+    "strict_valid_rate": 94.0,
+    "strict_valid_rate_ci95": [
+     83.8,
+     97.9
+    ],
+    "schema_valid_rate": 94.0,
+    "schema_valid_rate_ci95": [
+     83.8,
+     97.9
+    ],
+    "failure_counts": {
+     "null_field": 45,
+     "extra_field": 2,
+     "invalid_json": 1
+    }
+   },
+   "latency_s": {
+    "ocr_s": {
+     "mean": 0.7,
+     "median": 0.5,
+     "p90": 1.2,
+     "min": 0.3,
+     "max": 3.5,
+     "n": 50
+    },
+    "llm_s": {
+     "mean": 10.1,
+     "median": 8.3,
+     "p90": 18.8,
+     "min": 3.2,
+     "max": 33.5,
+     "n": 50
+    },
+    "llm_prompt_s": {
+     "mean": 4.0,
+     "median": 2.7,
+     "p90": 8.8,
+     "min": 0.0,
+     "max": 21.7,
+     "n": 50
+    },
+    "llm_gen_s": {
+     "mean": 6.0,
+     "median": 5.5,
+     "p90": 9.9,
+     "min": 3.0,
+     "max": 13.5,
+     "n": 50
+    },
+    "total_s": {
+     "mean": 10.8,
+     "median": 8.8,
+     "p90": 19.7,
+     "min": 3.5,
+     "max": 35.6,
+     "n": 50
+    },
+    "power": {
+     "ac": 50
+    }
+   }
+  }
+ }
+}

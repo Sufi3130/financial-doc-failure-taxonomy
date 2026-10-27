@@ -1,0 +1,117 @@
+{
+ "dataset": "CORD",
+ "manifest": "evaluation/datasets/CORD/subset_valtest_50.jsonl",
+ "lang": "eng",
+ "locale": "id",
+ "n": 50,
+ "configs": [
+  {
+   "config": "gray psm4 (current)",
+   "mode": "gray",
+   "psm": 4,
+   "total_found": 15,
+   "scored": 50,
+   "total_found_pct": 30.0,
+   "avg_s": 0.62
+  },
+  {
+   "config": "gray psm6",
+   "mode": "gray",
+   "psm": 6,
+   "total_found": 17,
+   "scored": 50,
+   "total_found_pct": 34.0,
+   "avg_s": 0.71
+  },
+  {
+   "config": "gray psm3",
+   "mode": "gray",
+   "psm": 3,
+   "total_found": 11,
+   "scored": 50,
+   "total_found_pct": 22.0,
+   "avg_s": 0.7
+  },
+  {
+   "config": "gray psm11",
+   "mode": "gray",
+   "psm": 11,
+   "total_found": 18,
+   "scored": 50,
+   "total_found_pct": 36.0,
+   "avg_s": 0.93
+  },
+  {
+   "config": "otsu psm4",
+   "mode": "otsu",
+   "psm": 4,
+   "total_found": 15,
+   "scored": 50,
+   "total_found_pct": 30.0,
+   "avg_s": 0.43
+  },
+  {
+   "config": "otsu psm6",
+   "mode": "otsu",
+   "psm": 6,
+   "total_found": 16,
+   "scored": 50,
+   "total_found_pct": 32.0,
+   "avg_s": 0.48
+  },
+  {
+   "config": "resize psm4",
+   "mode": "resize",
+   "psm": 4,
+   "total_found": 15,
+   "scored": 50,
+   "total_found_pct": 30.0,
+   "avg_s": 0.62
+  },
+  {
+   "config": "resize psm6",
+   "mode": "resize",
+   "psm": 6,
+   "total_found": 18,
+   "scored": 50,
+   "total_found_pct": 36.0,
+   "avg_s": 0.68
+  },
+  {
+   "config": "resize+otsu psm4",
+   "mode": "resize_otsu",
+   "psm": 4,
+   "total_found": 13,
+   "scored": 50,
+   "total_found_pct": 26.0,
+   "avg_s": 0.43
+  },
+  {
+   "config": "resize+otsu psm6",
+   "mode": "resize_otsu",
+   "psm": 6,
+   "total_found": 18,
+   "scored": 50,
+   "total_found_pct": 36.0,
+   "avg_s": 0.51
+  },
+  {
+   "config": "resize+adapt psm6",
+   "mode": "resize_adapt",
+   "psm": 6,
+   "total_found": 17,
+   "scored": 50,
+   "total_found_pct": 34.0,
+   "avg_s": 0.6
+  }
+ ],
+ "best": {
+  "config": "gray psm11",
+  "mode": "gray",
+  "psm": 11,
+  "total_found": 18,
+  "scored": 50,
+  "total_found_pct": 36.0,
+  "avg_s": 0.93
+ }
+}

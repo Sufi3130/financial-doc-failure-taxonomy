@@ -207,6 +207,13 @@ are not a duplicate (193 eligible).
   `cashprice − changeprice` (or is far from `subtotal_price`). This comes from
   the receipts or labels, not from parsing. The receipts are kept, but results
   on them should be checked by hand.
+- **Tesseract reads CORD poorly** (phone photos, not scans): the gold total is
+  in its OCR text for only ~34 % of the subset, vs ~96 % for PaddleOCR. A
+  diagnostic sweep of 11 preprocessing and page-segmentation settings
+  (`diagnose_tesseract.py`, result in
+  [`../results/tesseract_diagnosis_CORD.json`](../results/tesseract_diagnosis_CORD.json))
+  reached at best 36 %, so this is an OCR-capability limit, not a setup
+  problem. The usable CORD pipeline is PaddleOCR.
 
 ## Self-collected Hungarian dataset (optional extension)
 

@@ -281,12 +281,10 @@ Results go to `evaluation/results/<run_id>/`:
 - **SROIE:** 50-receipt test subset `subset_test_50` (seed 42), run
   `20260930-063807`.
 - **CORD v2:** 50-receipt validation + test subset `subset_valtest_50`
-  (seed 42), run `20260930-092942`. Only `total` is scored, normalised as
-  rupiah. ⚠️ This run used the **SROIE** few-shot examples (cross-dataset
-  prompting), and was started with one uncommitted `.gitignore` change. A
-  rerun with CORD few-shot examples from a clean commit is planned (M3).
-- Intel 4-core/8-thread laptop CPU on AC power, fresh OCR (no cache). SROIE
-  run from clean commit `2e9c77a`.
+  (seed 42), run `20261027-183737`, with **CORD** few-shot examples (CORD
+  train pool, seed 42). Only `total` is scored, normalised as rupiah.
+- Intel 4-core/8-thread laptop CPU on AC power, fresh OCR (no cache), both
+  runs from clean commits (SROIE `2e9c77a`, CORD `0684d6c`).
 
 All percentages are over the 50 receipts. **[a–b] is the 95 % confidence
 interval** (Wilson). With n = 50, intervals are about ±10–14 points, so small
@@ -311,14 +309,29 @@ differences between configurations are not meaningful on their own.
 
 | Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 ⚠️ | OCR-free VLM ablation |
 |---|---|---|---|
-| Total | 84.0 [72–92] (76.0) | 14.0 [7–26] (12.0) | TBD |
-| Schema compliance (strict-valid) | 100.0 % [93–100] | 68.0 % [54–79] | TBD |
-| Latency / page, median / mean / p90 | 45 s / 65 s / 138 s | 12 s / 16 s / 28 s | TBD |
+| Total | 96.0 [86–99] (80.0) | 26.0 [16–40] (20.0) | TBD |
+| Schema compliance (strict-valid) | 98.0 % [90–100] | 94.0 % [84–98] | TBD |
+| Latency / page, median / mean / p90 | 51 s / 76 s / 185 s | 9 s / 11 s / 20 s | TBD |
 
-⚠️ **Tesseract on CORD is not yet a valid baseline.** Its total drops from
-74 % on SROIE to 14 % on CORD, and 12 receipts gave no JSON at all. This
-points to a setup problem (CORD is Indonesian phone photos; only English
-language data and no preprocessing were used). It's being investigated.
+**Dataset-matched few-shot examples matter.** An earlier CORD run
+(`20260930-092942`) used the **SROIE** few-shot examples (English/Malay
+receipts, ringgit). Switching to **CORD** examples (Indonesian, rupiah, with
+`null` for the unlabelled company/date/address) improved PaddleOCR's total
+from **84 % → 96 %** (LLM misses 8 → 2: fewer cash/subtotal confusions and no
+1000× rupiah rescaling) and lifted schema compliance on Tesseract from
+**68 % → 94 %** (the `null` examples stop the model writing prose on thin OCR).
+
+⚠️ **Tesseract on CORD remains OCR-limited, not a fair baseline.** Its total
+(26 %) is capped by OCR: the gold total is in Tesseract's text for only 34 %
+of CORD receipts (33 of 50 are OCR misses), vs 96 % for PaddleOCR. A
+diagnostic sweep of 11 preprocessing and page-segmentation settings
+(`evaluation/datasets/CORD/diagnose_tesseract.py`,
+[result](evaluation/results/tesseract_diagnosis_CORD.json)) reached at best
+36 % (grayscale `--psm 11`) vs 30 % for the current setting — binarisation and
+upscaling did not help. CORD are phone photos (0.1–12 MP, perspective,
+shadows); classic Tesseract cannot read them, and this is not a
+language/preprocessing setup problem (the scored field is a number). Reported
+for completeness, but the usable CORD pipeline is PaddleOCR + Phi-3.
 
 **Where the misses come from**: OCR miss = the gold value is not in the OCR
 text at all; LLM miss = the value was in the OCR text but wasn't extracted
@@ -328,8 +341,8 @@ correctly.
 |---|---|---|---|---|---|
 | SROIE / PaddleOCR | 15 / 14 | 5 / 6 | 16 / 13 | 2 / 3 | roughly **equal** |
 | SROIE / Tesseract | 25 / 4 | 15 / 1 | 27 / 6 | 10 / 3 | mostly **OCR** |
-| CORD / PaddleOCR | – | – | – | 2 / 8 | mostly **LLM** |
-| CORD / Tesseract | – | – | – | 33 / 10 | mostly OCR (setup under investigation) |
+| CORD / PaddleOCR | – | – | – | 2 / 2 | balanced (LLM misses were 8 with SROIE examples) |
+| CORD / Tesseract | – | – | – | 33 / 4 | almost entirely **OCR** (OCR-limited, see above) |
 
 "In the OCR text" is an automatic text search. It can count a label/print
 difference (e.g. a label typo) as an OCR miss, so these counts are being
@@ -353,7 +366,7 @@ checked against a manual review (M3).
     1 receipt in 10 takes ≥ 295 s.
   - 9 of the 50 SROIE receipts are 35 MP scans, which take ~240–315 s of
     PaddleOCR each; they produce the long tail.
-  - CORD prompts are shorter, so the LLM is faster there.
+  - CORD prompts are shorter and the photos smaller, so CORD is faster.
 - **Reproducibility:** an earlier run of the same SROIE subset
   (`20260930-030537`) produced **identical OCR text, identical raw LLM output
   and identical extracted fields for all 100 receipt × engine runs** (100/100

@@ -309,7 +309,7 @@ committed next to each manifest.
 - **Timings:** measure on AC power with the model warm. The runner keeps
   Windows from sleeping; the reported runs were made plugged in with fresh
   OCR.
-- **Reported runs:** SROIE `20260930-063807`, CORD `20260930-092942`,
+- **Reported runs:** SROIE `20260930-063807`, CORD `20261027-183737`,
   commit `2e9c77a`. Results are in the README's "Key Results" and
   `evaluation/results/`.
 - **Tests:** 111 tests (no models needed) run on every push via GitHub
