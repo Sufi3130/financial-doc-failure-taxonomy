@@ -7,12 +7,13 @@
 The end-to-end command (OCR -> LLM -> JSON, single image or batch) is src/run.py.
 """
 
-from .llm import Generation, LLMSettings, LocalLLM
+from .llm import DEFAULT_MODEL_NAME, MODELS, Generation, LLMSettings, LocalLLM, resolve_model
 from .parse import Failure, ParseOutcome, parse_output
 from .prompts import PROMPT_VERSION, build_messages, to_phi3
 from .schema import FIELDS, Receipt
 
 __all__ = [
-    "FIELDS", "PROMPT_VERSION", "Failure", "Generation", "LLMSettings", "LocalLLM",
-    "ParseOutcome", "Receipt", "build_messages", "parse_output", "to_phi3",
+    "DEFAULT_MODEL_NAME", "FIELDS", "MODELS", "PROMPT_VERSION", "Failure", "Generation",
+    "LLMSettings", "LocalLLM", "ParseOutcome", "Receipt", "build_messages", "parse_output",
+    "resolve_model", "to_phi3",
 ]

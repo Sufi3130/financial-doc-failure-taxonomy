@@ -108,6 +108,15 @@ def test_llm_missing_model_file_is_a_clear_error():
         LocalLLM(LLMSettings(model_path="missing.gguf")).load()
 
 
+def test_resolve_model_name_or_path():
+    from src.extraction import MODELS, resolve_model
+    assert resolve_model("phi3").endswith("Phi-3-mini-4k-instruct-q4.gguf")
+    assert resolve_model("qwen2.5-3b").endswith("Qwen2.5-3B-Instruct-Q4_K_M.gguf")
+    assert "models" in resolve_model("llama3.2-3b").replace("\\", "/")
+    assert {"phi3", "qwen2.5-3b", "llama3.2-3b"} <= set(MODELS)
+    assert resolve_model("some/custom/model.gguf").endswith("model.gguf")  # a path passes through
+
+
 # ------------------------------------------------------------------ heavy dependencies stay lazy
 def test_project_imports_do_not_load_ocr_or_llm_libraries():
     code = (

@@ -10,11 +10,27 @@ from pathlib import Path
 from pydantic import BaseModel
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_MODEL = REPO_ROOT / "models" / "Phi-3-mini-4k-instruct-q4.gguf"
+MODELS_DIR = REPO_ROOT / "models"
+
+# Small quantized instruction-tuned LLMs compared in the extraction stage.
+# All Q4 GGUF, run on CPU via llama-cpp-python with the same prompt (v1).
+MODELS = {
+    "phi3": "Phi-3-mini-4k-instruct-q4.gguf",            # 3.8B, Microsoft, MIT
+    "qwen2.5-3b": "Qwen2.5-3B-Instruct-Q4_K_M.gguf",     # 3B, Alibaba, Apache 2.0, multilingual
+    "llama3.2-3b": "Llama-3.2-3B-Instruct-Q4_K_M.gguf",  # 3B, Meta, Llama 3.2 license
+}
+DEFAULT_MODEL_NAME = "phi3"
+
+
+def resolve_model(name_or_path):
+    """A registry short name (see MODELS) or a path to a .gguf file -> absolute path."""
+    if name_or_path in MODELS:
+        return str(MODELS_DIR / MODELS[name_or_path])
+    return str(Path(name_or_path))
 
 
 class LLMSettings(BaseModel):
-    model_path: str = str(DEFAULT_MODEL)
+    model_path: str = str(MODELS_DIR / MODELS[DEFAULT_MODEL_NAME])
     n_ctx: int = 4096
     n_threads: int | None = None  # None = llama.cpp default (physical cores)
     temperature: float = 0.0

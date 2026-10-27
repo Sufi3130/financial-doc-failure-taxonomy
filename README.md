@@ -152,16 +152,25 @@ prompt_text = reading_order(result.lines).text
 ## Extraction stage
 
 `src/extraction/` turns reading-order OCR text into a validated `Receipt`
-(`company`, `date`, `address`, `total`: each a string or `null`) with Phi-3
-Mini Q4 via llama-cpp-python. It runs on CPU with `temperature=0`, a fixed
-seed, `n_ctx=4096` and `max_tokens=256`.
+(`company`, `date`, `address`, `total`: each a string or `null`) with a small
+quantized LLM via llama-cpp-python. It runs on CPU with `temperature=0`, a
+fixed seed, `n_ctx=4096` and `max_tokens=256`.
 
 It is run through the pipeline command below.
 
+- **Models compared** (`--model`, registry in `llm.py`): the same prompt is
+  run across several small Q4 GGUF models to study failure modes per model.
+  - `phi3`: Phi-3-mini-4k-instruct, 3.8B (Microsoft, MIT) — the default.
+  - `qwen2.5-3b`: Qwen2.5-3B-Instruct (Alibaba, Apache 2.0, multilingual).
+  - `llama3.2-3b`: Llama-3.2-3B-Instruct (Meta, Llama 3.2 licence).
+
+  `--model` takes a registry name or a path to a `.gguf`. Each run records
+  the model in `run_meta.json`. Download the GGUFs into `models/` (gitignored).
 - **Prompt** (`prompts.py`, version recorded in every log): instructions plus
-  few-shot examples, then the target receipt. Phi-3's GGUF chat template
-  has no system role and silently drops `system` messages, so the
-  instructions are sent as part of the first user turn.
+  few-shot examples, then the target receipt. The instructions are sent as
+  part of the first user turn, not a `system` message (Phi-3's GGUF chat
+  template drops `system` messages; folding into the user turn works for every
+  model, keeping the prompt identical across models for a fair comparison).
 - **Few-shot examples** (`fewshot.py`): 2 by default (`--shots 0` for
   zero-shot), picked with a seed from the **train split of the dataset being
   evaluated**:
