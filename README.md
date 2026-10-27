@@ -348,9 +348,14 @@ checked against a manual review (M3).
     PaddleOCR each; they produce the long tail.
   - CORD prompts are shorter, so the LLM is faster there.
 - **Reproducibility:** an earlier run of the same SROIE subset
-  (`20260930-030537`) produced identical OCR text and identical raw LLM
-  output for all 100 receipt × engine runs. Only its timings differed: that
-  run was partly on battery, and the laptop slept once.
+  (`20260930-030537`) produced **identical OCR text, identical raw LLM output
+  and identical extracted fields for all 100 receipt × engine runs** (100/100
+  each; both runs did fresh OCR). Only the timings differed: that run was
+  partly on battery, and the laptop slept once.
+  - Evidence: [`evaluation/results/reproducibility_20260930-030537_vs_20260930-063807.json`](evaluation/results/reproducibility_20260930-030537_vs_20260930-063807.json)
+    holds SHA-256 fingerprints per row (no receipt text) and the run settings
+    of both runs.
+  - To check yourself: `python evaluation/reproducibility.py <run_a> <run_b>`.
 - Per-receipt results: [`evaluation/results/`](evaluation/results/).
 
 ## Status
