@@ -1,0 +1,59 @@
+{
+ "primary": {
+  "SROIE/paddleocr": {
+   "wrong_entity": 11,
+   "boundary_too_wide": 6,
+   "value_not_in_ocr": 33,
+   "wrong_value": 3,
+   "normalised_only_mismatch": 36,
+   "boundary_too_narrow": 4,
+   "wrong_total": 1,
+   "partial_value": 2,
+   "malformed_json": 8,
+   "wrong_date_format": 1,
+   "copy_corruption": 1
+  },
+  "SROIE/tesseract": {
+   "wrong_entity": 3,
+   "value_not_in_ocr": 67,
+   "normalised_only_mismatch": 35,
+   "boundary_too_wide": 4,
+   "wrong_value": 1,
+   "copy_corruption": 1,
+   "wrong_total": 3,
+   "partial_value": 2,
+   "malformed_json": 8
+  }
+ },
+ "tags": {
+  "SROIE/paddleocr": {
+   "value_not_in_ocr": 34,
+   "empty_field": 1
+  },
+  "SROIE/tesseract": {
+   "value_not_in_ocr": 75,
+   "ocr_confidence_low": 72,
+   "ocr_empty_page": 8
+  }
+ },
+ "subtypes": {
+  "boundary_too_wide": {
+   "adjacent_text": 4,
+   "hallucinated_extension": 6
+  },
+  "wrong_value": {
+   "other_date": 4
+  },
+  "wrong_total": {
+   "other_amount_on_receipt": 3,
+   "amount_not_in_ocr": 1
+  },
+  "malformed_json": {
+   "derailment": 8,
+   "prose_instead_of_json": 8
+  },
+  "wrong_date_format": {
+   "unparseable": 1
+  }
+ }
+}

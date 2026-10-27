@@ -1,0 +1,41 @@
+{
+ "primary": {
+  "CORD/paddleocr": {
+   "hallucinated_unlabelled_field": 112,
+   "normalised_only_mismatch": 4,
+   "wrong_total": 8
+  },
+  "CORD/tesseract": {
+   "hallucinated_unlabelled_field": 81,
+   "fewshot_copy": 1,
+   "wrong_total": 7,
+   "malformed_json": 14,
+   "value_not_in_ocr": 21,
+   "normalised_only_mismatch": 1
+  }
+ },
+ "tags": {
+  "CORD/paddleocr": {
+   "ocr_confidence_low": 1
+  },
+  "CORD/tesseract": {
+   "fewshot_copy": 22,
+   "ocr_confidence_low": 43,
+   "ocr_empty_page": 15,
+   "value_not_in_ocr": 33,
+   "empty_field": 1
+  }
+ },
+ "subtypes": {
+  "wrong_total": {
+   "other_amount_on_receipt:subtotal": 1,
+   "scale_error": 7,
+   "other_amount_on_receipt:cash": 6,
+   "amount_not_in_ocr": 1
+  },
+  "malformed_json": {
+   "prose_instead_of_json": 12,
+   "derailment": 2
+  }
+ }
+}

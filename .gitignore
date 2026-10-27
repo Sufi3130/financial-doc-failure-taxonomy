@@ -30,6 +30,7 @@ evaluation/datasets/**/raw/
 evaluation/datasets/**/manifest.jsonl
 evaluation/datasets/**/subset_*.jsonl
 evaluation/results/**/per_receipt_detail.jsonl
+evaluation/failure_taxonomy/tags/**/tags_detail.jsonl
 
 # Local model weights
 models/
