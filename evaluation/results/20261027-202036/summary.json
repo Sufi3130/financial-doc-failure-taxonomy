@@ -1,0 +1,164 @@
+{
+ "run_id": "20261027-202036",
+ "manifest": "evaluation/datasets/SROIE/subset_test_50.jsonl",
+ "manifest_sha256": "48204e93a02fa8cee5fcc75134d29a8ad0d6fc1b619c06c35b39ea910265a040",
+ "n_receipts": 50,
+ "run": {
+  "started": "2026-10-27T20:20:36",
+  "finished": "2026-10-27T20:42:55",
+  "command": "python -m src.run --manifest evaluation/datasets/SROIE/subset_test_50.jsonl --engine paddleocr --model qwen2.5-3b",
+  "git": {
+   "commit": "93112460c5bc6cd297dec625d742898e2a0cb853",
+   "uncommitted_changes": []
+  },
+  "prompt_version": "v1",
+  "shots": 2,
+  "fewshot_seed": 42,
+  "ocr_cache": true
+ },
+ "fewshot_ids": {
+  "paddleocr": [
+   "X51005676545",
+   "X51005361946"
+  ]
+ },
+ "engines": {
+  "paddleocr": {
+   "receipts": 50,
+   "errors": 0,
+   "fields": {
+    "company": {
+     "scored": 50,
+     "strict_acc": 52.0,
+     "strict_acc_ci95": [
+      38.5,
+      65.2
+     ],
+     "normalized_acc": 60.0,
+     "normalized_acc_ci95": [
+      46.2,
+      72.4
+     ],
+     "in_ocr": 70.0,
+     "ocr_miss": 15,
+     "llm_miss_given_in_ocr": 5,
+     "mean_token_f1": 73.6
+    },
+    "date": {
+     "scored": 50,
+     "strict_acc": 84.0,
+     "strict_acc_ci95": [
+      71.5,
+      91.7
+     ],
+     "normalized_acc": 94.0,
+     "normalized_acc_ci95": [
+      83.8,
+      97.9
+     ],
+     "in_ocr": 90.0,
+     "ocr_miss": 5,
+     "llm_miss_given_in_ocr": 0
+    },
+    "address": {
+     "scored": 50,
+     "strict_acc": 10.0,
+     "strict_acc_ci95": [
+      4.3,
+      21.4
+     ],
+     "normalized_acc": 66.0,
+     "normalized_acc_ci95": [
+      52.2,
+      77.6
+     ],
+     "in_ocr": 68.0,
+     "ocr_miss": 16,
+     "llm_miss_given_in_ocr": 3,
+     "mean_token_f1": 83.6
+    },
+    "total": {
+     "scored": 50,
+     "strict_acc": 70.0,
+     "strict_acc_ci95": [
+      56.2,
+      80.9
+     ],
+     "normalized_acc": 88.0,
+     "normalized_acc_ci95": [
+      76.2,
+      94.4
+     ],
+     "in_ocr": 96.0,
+     "ocr_miss": 2,
+     "llm_miss_given_in_ocr": 5
+    }
+   },
+   "all_fields_normalized_acc": 44.0,
+   "all_fields_normalized_acc_ci95": [
+    31.2,
+    57.7
+   ],
+   "schema": {
+    "strict_valid_rate": 100.0,
+    "strict_valid_rate_ci95": [
+     92.9,
+     100.0
+    ],
+    "schema_valid_rate": 100.0,
+    "schema_valid_rate_ci95": [
+     92.9,
+     100.0
+    ],
+    "failure_counts": {
+     "null_field": 2
+    }
+   },
+   "latency_s": {
+    "ocr_s": {
+     "mean": 103.6,
+     "median": 74.0,
+     "p90": 251.7,
+     "min": 42.1,
+     "max": 315.5,
+     "n": 50
+    },
+    "llm_s": {
+     "mean": 25.9,
+     "median": 25.0,
+     "p90": 33.3,
+     "min": 13.5,
+     "max": 51.5,
+     "n": 50
+    },
+    "llm_prompt_s": {
+     "mean": 15.7,
+     "median": 14.6,
+     "p90": 22.3,
+     "min": 7.5,
+     "max": 38.9,
+     "n": 50
+    },
+    "llm_gen_s": {
+     "mean": 10.1,
+     "median": 10.4,
+     "p90": 12.1,
+     "min": 4.4,
+     "max": 13.2,
+     "n": 50
+    },
+    "total_s": {
+     "mean": 129.4,
+     "median": 101.6,
+     "p90": 275.2,
+     "min": 58.9,
+     "max": 337.0,
+     "n": 50
+    },
+    "power": {
+     "ac": 50
+    }
+   }
+  }
+ }
+}

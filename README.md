@@ -340,9 +340,54 @@ diagnostic sweep of 11 preprocessing and page-segmentation settings
 upscaling did not help. CORD are phone photos (0.1–12 MP, perspective,
 shadows); classic Tesseract cannot read them, and this is not a
 language/preprocessing setup problem (the scored field is a number). Reported
-for completeness, but the usable CORD pipeline is PaddleOCR + Phi-3.
+for completeness, but the usable CORD pipeline is PaddleOCR.
 
-**Where the misses come from**: OCR miss = the gold value is not in the OCR
+### LLM comparison (OCR fixed to PaddleOCR)
+
+The same prompt and subsets, run across three small Q4 GGUF models on CPU.
+This is the thesis's core comparison. Runs `20260930-063807` / `20261027-183737`
+(phi3), `20261027-202036` / `20261027-204256` (qwen2.5-3b), `20261027-204939` /
+`20261027-211038` (llama3.2-3b).
+
+**SROIE Task 3**: normalised match % (strict-valid JSON and median LLM time below)
+
+| Metric | Phi-3 Mini (3.8B) | **Qwen2.5-3B** | Llama-3.2-3B |
+|---|---|---|---|
+| Company | 44.0 | 60.0 | 62.0 |
+| Date | 82.0 | 94.0 | 94.0 |
+| Address | 42.0 | 66.0 | 56.0 |
+| Total | 92.0 | 88.0 | 84.0 |
+| **All 4 fields correct** | 26.0 [16–40] | **44.0 [31–58]** | 32.0 [21–46] |
+| Token F1 company / address | 62 / 68 | 74 / 84 | 74 / 77 |
+| Schema compliance (strict-valid) | 96 % | **100 %** | **100 %** |
+| LLM time / page, median | 44 s | 25 s | 23 s |
+
+**CORD v2 total**: normalised match %
+
+| Metric | Phi-3 Mini | **Qwen2.5-3B** | Llama-3.2-3B |
+|---|---|---|---|
+| Total | 96.0 [86–99] | **100.0 [93–100]** | 78.0 [65–87] |
+| Schema compliance (strict-valid) | 98 % | 100 % | 100 % |
+| LLM time / page, median | 13 s | 7 s | 6 s |
+
+**Findings:**
+
+- **Qwen2.5-3B is the best small model, despite being smaller than Phi-3**
+  (3B vs 3.8B): SROIE all-4-fields **44 % vs 26 %**, CORD total **100 % vs
+  96 %**, and ~2× faster. It trails Phi-3 only on the SROIE total (88 vs 92,
+  within the confidence interval). **Model family matters more than size** at
+  this scale.
+- **Derailment is a Phi-3-specific failure mode.** Phi-3 produced invalid or
+  truncated JSON on 4 fields (the `MR. D.I.Y.` prompt-echo on SROIE and the
+  Newton-letter on CORD). Qwen and Llama produced **100 % valid JSON** on both
+  datasets — no derailments at all.
+- **Multilingual ability shows on CORD** (Indonesian receipts): Qwen2.5-3B
+  (strongly multilingual) **100 %**, Phi-3 96 %, **Llama-3.2-3B only 78 %**.
+  Llama is competitive on SROIE but the weakest on CORD totals.
+- Qwen and Llama both read **company and address far better** than Phi-3
+  (token F1 ~74–84 vs 62–68).
+
+**Where the misses come from** (Phi-3): OCR miss = the gold value is not in the OCR
 text at all; LLM miss = the value was in the OCR text but wasn't extracted
 correctly.
 

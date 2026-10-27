@@ -1,0 +1,164 @@
+{
+ "run_id": "20261027-204939",
+ "manifest": "evaluation/datasets/SROIE/subset_test_50.jsonl",
+ "manifest_sha256": "48204e93a02fa8cee5fcc75134d29a8ad0d6fc1b619c06c35b39ea910265a040",
+ "n_receipts": 50,
+ "run": {
+  "started": "2026-10-27T20:49:39",
+  "finished": "2026-10-27T21:10:36",
+  "command": "python -m src.run --manifest evaluation/datasets/SROIE/subset_test_50.jsonl --engine paddleocr --model llama3.2-3b",
+  "git": {
+   "commit": "93112460c5bc6cd297dec625d742898e2a0cb853",
+   "uncommitted_changes": []
+  },
+  "prompt_version": "v1",
+  "shots": 2,
+  "fewshot_seed": 42,
+  "ocr_cache": true
+ },
+ "fewshot_ids": {
+  "paddleocr": [
+   "X51005676545",
+   "X51005361946"
+  ]
+ },
+ "engines": {
+  "paddleocr": {
+   "receipts": 50,
+   "errors": 0,
+   "fields": {
+    "company": {
+     "scored": 50,
+     "strict_acc": 54.0,
+     "strict_acc_ci95": [
+      40.4,
+      67.0
+     ],
+     "normalized_acc": 62.0,
+     "normalized_acc_ci95": [
+      48.2,
+      74.1
+     ],
+     "in_ocr": 70.0,
+     "ocr_miss": 15,
+     "llm_miss_given_in_ocr": 5,
+     "mean_token_f1": 74.2
+    },
+    "date": {
+     "scored": 50,
+     "strict_acc": 80.0,
+     "strict_acc_ci95": [
+      67.0,
+      88.8
+     ],
+     "normalized_acc": 94.0,
+     "normalized_acc_ci95": [
+      83.8,
+      97.9
+     ],
+     "in_ocr": 90.0,
+     "ocr_miss": 5,
+     "llm_miss_given_in_ocr": 0
+    },
+    "address": {
+     "scored": 50,
+     "strict_acc": 14.0,
+     "strict_acc_ci95": [
+      7.0,
+      26.2
+     ],
+     "normalized_acc": 56.0,
+     "normalized_acc_ci95": [
+      42.3,
+      68.8
+     ],
+     "in_ocr": 68.0,
+     "ocr_miss": 16,
+     "llm_miss_given_in_ocr": 8,
+     "mean_token_f1": 76.5
+    },
+    "total": {
+     "scored": 50,
+     "strict_acc": 66.0,
+     "strict_acc_ci95": [
+      52.2,
+      77.6
+     ],
+     "normalized_acc": 84.0,
+     "normalized_acc_ci95": [
+      71.5,
+      91.7
+     ],
+     "in_ocr": 96.0,
+     "ocr_miss": 2,
+     "llm_miss_given_in_ocr": 7
+    }
+   },
+   "all_fields_normalized_acc": 32.0,
+   "all_fields_normalized_acc_ci95": [
+    20.8,
+    45.8
+   ],
+   "schema": {
+    "strict_valid_rate": 100.0,
+    "strict_valid_rate_ci95": [
+     92.9,
+     100.0
+    ],
+    "schema_valid_rate": 100.0,
+    "schema_valid_rate_ci95": [
+     92.9,
+     100.0
+    ],
+    "failure_counts": {
+     "null_field": 2
+    }
+   },
+   "latency_s": {
+    "ocr_s": {
+     "mean": 103.6,
+     "median": 74.0,
+     "p90": 251.7,
+     "min": 42.1,
+     "max": 315.5,
+     "n": 50
+    },
+    "llm_s": {
+     "mean": 24.0,
+     "median": 23.4,
+     "p90": 31.9,
+     "min": 13.5,
+     "max": 44.6,
+     "n": 50
+    },
+    "llm_prompt_s": {
+     "mean": 13.8,
+     "median": 12.8,
+     "p90": 19.4,
+     "min": 7.4,
+     "max": 32.0,
+     "n": 50
+    },
+    "llm_gen_s": {
+     "mean": 10.1,
+     "median": 10.4,
+     "p90": 12.8,
+     "min": 4.3,
+     "max": 15.9,
+     "n": 50
+    },
+    "total_s": {
+     "mean": 127.6,
+     "median": 101.1,
+     "p90": 273.6,
+     "min": 56.7,
+     "max": 333.4,
+     "n": 50
+    },
+    "power": {
+     "ac": 50
+    }
+   }
+  }
+ }
+}
