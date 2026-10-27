@@ -3,7 +3,7 @@
 import pytest
 
 from src.extraction import build_messages, parse_output, to_phi3
-from src.extraction.fewshot import eligible_train_ids, select_fewshot_ids
+from src.extraction.fewshot import CORD_POOL, SROIE_MANIFEST, eligible_train_ids, pool_for, select_fewshot_ids
 
 GOOD = '{"company": "OJC MARKETING SDN BHD", "date": "15/01/2019", "address": "NO 2 & 4", "total": "193.00"}'
 
@@ -104,3 +104,15 @@ def test_fewshot_only_from_clean_train_not_overlapping_test():
     assert sorted(select_fewshot_ids(records, k=2, seed=1)) == ["D", "E"]
     assert select_fewshot_ids(records, k=0) == []
     assert select_fewshot_ids(records, k=1, seed=7) == select_fewshot_ids(records, k=1, seed=7)
+
+
+def test_fewshot_pool_matches_the_dataset_of_the_manifest():
+    assert pool_for("evaluation/datasets/CORD/subset_valtest_50.jsonl") == CORD_POOL
+    assert pool_for("evaluation/datasets/SROIE/subset_test_50.jsonl") == SROIE_MANIFEST
+    assert pool_for(None) == SROIE_MANIFEST  # single image: SROIE examples, as before
+    assert pool_for("somewhere/else.jsonl") == SROIE_MANIFEST
+
+
+def test_fewshot_never_picks_a_receipt_identical_to_an_evaluated_one():
+    records = [rec("V1", "validation", "h1"), rec("A", "train", "h1"), rec("B", "train", "h2")]
+    assert eligible_train_ids(records) == ["B"]

@@ -172,8 +172,12 @@ python evaluation/datasets/CORD/prepare.py         # --seed 42 --n 50 by default
 The script reads all three splits (about 2.3 GB) for stats and duplicate
 checks. It exports only **validation + test** (200 receipts, ~460 MB) to
 `CORD/raw/export/{split}/<id>.png` + `<id>.json` (the full original
-`ground_truth`). IDs are `{split}_{image_id:03d}`, e.g. `test_007`. Train is
-not exported: nothing is trained on it. The script exits with an error
+`ground_truth`). IDs are `{split}_{image_id:03d}`, e.g. `test_007`. Train
+isn't scored or trained on, so only a **few-shot pool** of it is exported: 20
+train receipts (seed 42) with exactly one regular `total_price`, no
+duplicate, and no identical copy in validation/test. They're written to
+`CORD/fewshot_pool.jsonl` (gitignored, contains labels) and
+`CORD/fewshot_pool_ids.txt` (committed). The script exits with an error
 unless it finds 800 / 100 / 100 receipts.
 
 | Output | Contents | In git |

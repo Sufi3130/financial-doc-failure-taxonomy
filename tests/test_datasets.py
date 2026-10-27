@@ -144,6 +144,16 @@ def test_cord_line_items_always_lists(cord_records):
     assert items[1]["price_normalized"] == "32000.00"
 
 
+def test_cord_fewshot_pool_excludes_issues_and_eval_duplicates(cord, cord_records):
+    cord.mark_duplicates(cord_records)
+    pool, eligible = cord.pick_fewshot_pool(cord_records, n=20, seed=42)
+    # train_000 is byte-identical to test_001 and train_001 has no total, so neither may be an example
+    assert pool == [] and eligible == 0
+    extra = dict(cord_records[0], id="train_002", sha256="unique")
+    pool, eligible = cord.pick_fewshot_pool(cord_records + [extra], n=20, seed=42)
+    assert pool == ["train_002"] and eligible == 1
+
+
 def test_cord_duplicates_and_key_paths(cord, cord_records):
     within, cross = cord.mark_duplicates(cord_records)
     assert within == {} and cross == [["test/test_001", "train/train_000"]]

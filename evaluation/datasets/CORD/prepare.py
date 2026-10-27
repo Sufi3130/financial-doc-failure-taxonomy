@@ -6,12 +6,15 @@ total.total_price is mapped (to `total`) and menu items are kept as optional
 `line_items`. Amounts are rupiah and normalised with locale="id".
 
 Validation + test receipts are exported to raw/export/{split}/<id>.png and
-<id>.json and go into the manifest; train is only read for stats and the
-duplicate check. Writes:
+<id>.json and go into the manifest. Train is read for stats and the
+duplicate check, and a seeded pool of 20 train receipts is exported as
+few-shot candidates. Writes:
 
     manifest.jsonl              validation + test records (gitignored: contains labels)
     subset_valtest_50.jsonl     seeded evaluation subset (gitignored: contains labels)
     subset_valtest_50_ids.txt   receipt IDs of that subset (committed)
+    fewshot_pool.jsonl          train receipts usable as few-shot examples (gitignored: labels)
+    fewshot_pool_ids.txt        their IDs (committed)
     prepare_report.json         counts, field coverage, data-quality findings (committed)
 
 Usage:
@@ -163,6 +166,19 @@ def mark_duplicates(records):
     return {s: sorted(g) for s, g in within.items()}, sorted(cross)
 
 
+def pick_fewshot_pool(records, n=20, seed=42):
+    """Seeded pool of train receipts usable as few-shot examples: exactly one regular
+    total_price (no issues), not a duplicate, and not byte-identical to any
+    validation/test receipt (so an example can never be an evaluated receipt)."""
+    eval_hashes = {r["sha256"] for r in records if r["split"] in EXPORT_SPLITS}
+    eligible = sorted(
+        r["id"] for r in records
+        if r["split"] == "train" and not r["issues"] and r["duplicate_of"] is None
+        and r["sha256"] not in eval_hashes
+    )
+    return sorted(random.Random(seed).sample(eligible, min(n, len(eligible)))), len(eligible)
+
+
 def write_jsonl(path, rows):
     with path.open("w", encoding="utf-8", newline="\n") as f:
         for row in rows:
@@ -173,6 +189,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--n", type=int, default=50, help="subset size")
+    parser.add_argument("--pool", type=int, default=20, help="few-shot pool size (train receipts)")
     args = parser.parse_args()
 
     print("== Reading CORD v2 (this reads ~2.3 GB of Arrow files)")
@@ -221,16 +238,32 @@ def main():
                         "rule": "validation+test receipts, not a duplicate of a lower ID, "
                                 "exactly one regular total_price"}
 
+    # few-shot pool from CORD train: only these train images are exported
+    pool_ids, n_pool_eligible = pick_fewshot_pool(records, args.pool, args.seed)
+    pool_set = set(pool_ids)
+    for image_bytes, gt_str in read_split("train"):
+        rec = build_record("train", image_bytes, json.loads(gt_str))
+        if rec["id"] in pool_set:
+            export(rec, image_bytes, gt_str)
+    report["fewshot_pool"] = {"split": "train", "n": len(pool_ids), "seed": args.seed,
+                              "eligible": n_pool_eligible, "ids": pool_ids,
+                              "rule": "train receipts with exactly one regular total_price, not a duplicate, "
+                                      "not identical to any validation/test receipt"}
+
     manifest_rows = [r for r in records if r["split"] in EXPORT_SPLITS]
     chosen = set(subset_ids)
     manifest = HERE / "manifest.jsonl"
     subset_jsonl = HERE / f"subset_valtest_{args.n}.jsonl"
     subset_ids_txt = HERE / f"subset_valtest_{args.n}_ids.txt"
+    pool_jsonl = HERE / "fewshot_pool.jsonl"
+    pool_ids_txt = HERE / "fewshot_pool_ids.txt"
     report_json = HERE / "prepare_report.json"
 
     write_jsonl(manifest, manifest_rows)
     write_jsonl(subset_jsonl, [r for r in manifest_rows if r["id"] in chosen])
     subset_ids_txt.write_text("\n".join(subset_ids) + "\n", encoding="utf-8", newline="\n")
+    write_jsonl(pool_jsonl, [r for r in records if r["id"] in pool_set])
+    pool_ids_txt.write_text("\n".join(pool_ids) + "\n", encoding="utf-8", newline="\n")
     report_json.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
     print("\n== Stats")
@@ -252,11 +285,12 @@ def main():
     print(f"  cross-split duplicates    : {len(cross)} {[' / '.join(g) for g in cross]}")
     print(f"  manifest: {len(manifest_rows)} validation+test receipts; "
           f"subset: {args.n} of {len(eligible)} eligible (seed {args.seed})")
+    print(f"  few-shot pool: {len(pool_ids)} of {n_pool_eligible} eligible train receipts (seed {args.seed})")
 
     print("\n== Wrote")
-    for p in (manifest, subset_jsonl, subset_ids_txt, report_json):
+    for p in (manifest, subset_jsonl, subset_ids_txt, pool_jsonl, pool_ids_txt, report_json):
         print(f"  {rel(p)}")
-    print(f"  {rel(EXPORT)}/{{{','.join(EXPORT_SPLITS)}}}/<id>.png + .json")
+    print(f"  {rel(EXPORT)}/{{{','.join(EXPORT_SPLITS)}}}/<id>.png + .json, and train/ for the few-shot pool")
 
     if not ok:
         sys.exit("\n[FAIL] receipt counts do not match the official release")

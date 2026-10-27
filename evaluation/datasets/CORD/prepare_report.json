@@ -247,5 +247,34 @@
     "seed": 42,
     "eligible": 193,
     "rule": "validation+test receipts, not a duplicate of a lower ID, exactly one regular total_price"
+  },
+  "fewshot_pool": {
+    "split": "train",
+    "n": 20,
+    "seed": 42,
+    "eligible": 773,
+    "ids": [
+      "train_025",
+      "train_030",
+      "train_032",
+      "train_091",
+      "train_097",
+      "train_106",
+      "train_118",
+      "train_148",
+      "train_230",
+      "train_235",
+      "train_257",
+      "train_289",
+      "train_441",
+      "train_577",
+      "train_623",
+      "train_674",
+      "train_717",
+      "train_779",
+      "train_784",
+      "train_785"
+    ],
+    "rule": "train receipts with exactly one regular total_price, not a duplicate, not identical to any validation/test receipt"
   }
 }

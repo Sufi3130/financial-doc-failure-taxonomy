@@ -24,6 +24,7 @@ Timing notes:
 """
 
 import argparse
+import functools
 import hashlib
 import json
 import os
@@ -38,7 +39,7 @@ from importlib import metadata
 from pathlib import Path
 
 from src.extraction import LocalLLM, build_messages, parse_output, to_phi3
-from src.extraction.fewshot import load_examples
+from src.extraction.fewshot import load_examples, pool_for
 from src.extraction.prompts import PROMPT_VERSION
 from src.ocr import ENGINES, cached_ocr, get_engine, new_run_dir
 from src.ocr.runlog import CACHE_DIR
@@ -270,8 +271,11 @@ def main():
     src.add_argument("image", nargs="?", help="one receipt image")
     src.add_argument("--manifest", help="manifest or subset .jsonl (id, split, image per line)")
     parser.add_argument("--engine", default="paddleocr", choices=[*ENGINES, "all"])
-    parser.add_argument("--shots", type=int, default=2, help="few-shot examples from SROIE train")
+    parser.add_argument("--shots", type=int, default=2,
+                        help="few-shot examples from the train split of the manifest's dataset")
     parser.add_argument("--seed", type=int, default=42, help="few-shot selection seed")
+    parser.add_argument("--fewshot-pool", help="override the few-shot pool (default: by dataset folder; "
+                                               "SROIE manifest train split, or CORD/fewshot_pool.jsonl)")
     parser.add_argument("--limit", type=int, help="only the first N receipts")
     parser.add_argument("--no-cache", action="store_true", help="re-run OCR even if cached")
     parser.add_argument("--resume", help="existing run directory to continue")
@@ -280,6 +284,7 @@ def main():
     records = load_records(args.manifest, args.image)[: args.limit]
     engines = [get_engine(n) for n in (ENGINES if args.engine == "all" else [args.engine])]
     run_dir = Path(args.resume) if args.resume else new_run_dir("pipeline")
+    pool = Path(args.fewshot_pool) if args.fewshot_pool else pool_for(args.manifest)
 
     meta_path = run_dir / "run_meta.json"
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if args.resume and meta_path.is_file() else {
@@ -289,7 +294,7 @@ def main():
         "manifest_sha256": _sha256(args.manifest) if args.manifest else None,
         "n_receipts": len(records),
         "prompt_version": PROMPT_VERSION, "shots": args.shots, "fewshot_seed": args.seed,
-        "ocr_cache": not args.no_cache,
+        "fewshot_pool": _rel(pool), "ocr_cache": not args.no_cache,
         "git": _git_state(), "versions": _versions(),
         "machine": {"platform": platform.platform(), "processor": platform.processor(),
                     "logical_cpus": os.cpu_count(), "power_at_start": power_state()},
@@ -298,13 +303,15 @@ def main():
         meta.setdefault("resumed", []).append(datetime.now().isoformat(timespec="seconds"))
 
     power = power_state()
-    print(f"run: {_rel(run_dir)}  ({len(records)} receipts x {len(engines)} engine(s))")
+    print(f"run: {_rel(run_dir)}  ({len(records)} receipts x {len(engines)} engine(s)), "
+          f"few-shot pool {_rel(pool)}")
     if power and power["source"] != "ac":
         print(f"[warn] running on {power['source']} power: timings will not be comparable to AC runs")
     keep_awake(True)
     try:
         run_jsonl, meta = run(records, engines, LocalLLM(), run_dir, args.shots, args.seed,
-                              use_cache=not args.no_cache, meta=meta)
+                              use_cache=not args.no_cache, meta=meta,
+                              fewshot_loader=functools.partial(load_examples, pool=pool))
     finally:
         keep_awake(False)
 

@@ -74,7 +74,7 @@ Before that, the datasets are converted once into manifests by
 | Reading order | `src/ocr/layout.py` | pieces → prompt text + row map | joins pieces on the same row (`TOTAL:` + `193.00`) |
 | OCR run log / cache | `src/ocr/runlog.py` | `OCRResult` ↔ JSON | a cached result keeps the OCR time measured when it really ran |
 | Schema | `src/extraction/schema.py` | JSON → `Receipt` | 4 required keys, `str` or `null`, no extra keys, strict types |
-| Prompt | `src/extraction/prompts.py`, `fewshot.py` | OCR text → chat messages | version `v1`; few-shot examples from SROIE train only |
+| Prompt | `src/extraction/prompts.py`, `fewshot.py` | OCR text → chat messages | version `v1`; few-shot examples from the train split of the evaluated dataset (SROIE train, or the CORD train pool) |
 | LLM | `src/extraction/llm.py` | messages → `Generation` | llama-cpp; records token counts and prompt/generation time |
 | Parser | `src/extraction/parse.py` | raw text → `ParseOutcome` | lenient repairs + a failure type for every deviation |
 | Runner | `src/run.py` | image or manifest → `run.jsonl` + `run_meta.json` | batch, resume, warm-up, keeps Windows awake |
@@ -250,7 +250,7 @@ engine settings are unchanged.
 | Temperature 0, fixed seed | Deterministic: a repeated run gave identical OCR text and raw output for all 100 receipt × engine runs |
 | **No constrained decoding** (JSON grammar) | Forcing valid JSON would hide the format failures being measured |
 | Instructions folded into the first user message | Phi-3's GGUF chat template drops `system` messages; with a system message the model got no instructions and wrote prose |
-| 2 few-shot examples, SROIE train only, seed 42 | Enough to show the format. Train receipts identical to a test receipt are excluded. Examples come first so the prefix is reused. Each engine's examples use that engine's own OCR text |
+| 2 few-shot examples from the evaluated dataset's train split, seed 42 | Enough to show the format, in the dataset's own language and amount style (the first CORD run used SROIE examples; see the README). Train receipts identical to an evaluated receipt are excluded. Examples come first so the prefix is reused. Each engine's examples use that engine's own OCR text |
 | Rows rebuilt before prompting | OCR engines split rows into pieces; the prompt would otherwise separate labels from values |
 | Lenient parsing, strict validation | `schema_valid` / `strict_valid` separate "usable" from "compliant"; `lenient` values allow field scoring despite small format slips |
 | Locale-aware amount normalisation | `"60.000"` is 60.00 ringgit (SROIE) but 60,000 rupiah (CORD) |

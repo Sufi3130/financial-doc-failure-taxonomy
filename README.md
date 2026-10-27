@@ -163,11 +163,18 @@ It is run through the pipeline command below.
   has no system role and silently drops `system` messages, so the
   instructions are sent as part of the first user turn.
 - **Few-shot examples** (`fewshot.py`): 2 by default (`--shots 0` for
-  zero-shot), picked with a seed from **SROIE train only**. Excluded: train
-  receipts with label issues, duplicates, and the 7 byte-identical to a test
-  receipt. The same receipts are used for every OCR engine. Their OCR text
-  comes from the same engine as the target, and their answers are the raw
-  ground-truth strings. Requires the SROIE manifest (`prepare.py`).
+  zero-shot), picked with a seed from the **train split of the dataset being
+  evaluated**:
+  - **SROIE:** SROIE train. Excluded: train receipts with label issues,
+    duplicates, and the 7 byte-identical to a test receipt.
+  - **CORD:** a pool of 20 CORD train receipts written by `CORD/prepare.py`
+    (`fewshot_pool_ids.txt`). Their answers have `null` company/date/address,
+    because CORD doesn't annotate them.
+
+  The pool is chosen from the manifest's dataset folder; `--fewshot-pool`
+  overrides it. The same receipts are used for every OCR engine. Their OCR
+  text comes from the same engine as the target, and their answers are the
+  raw ground-truth strings.
 - **No constrained decoding:** the model is free to produce invalid output,
   because output-format failures are part of what is measured.
 - **Parsing** (`parse.py`): lenient. It strips code fences and surrounding
