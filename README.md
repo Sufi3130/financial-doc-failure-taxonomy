@@ -274,36 +274,64 @@ Results go to `evaluation/results/<run_id>/`:
 - **SROIE:** 50-receipt test subset `subset_test_50` (seed 42), run
   `20260930-063807`.
 - **CORD v2:** 50-receipt validation + test subset `subset_valtest_50`
-  (seed 42), run `20260930-092942`. Same prompt and examples; only `total` is
-  scored, normalised as rupiah.
-- Both runs: commit `2e9c77a`, Intel 4-core/8-thread laptop CPU on AC power,
-  fresh OCR (no cache).
+  (seed 42), run `20260930-092942`. Only `total` is scored, normalised as
+  rupiah. ⚠️ This run used the **SROIE** few-shot examples (cross-dataset
+  prompting), and was started with one uncommitted `.gitignore` change. A
+  rerun with CORD few-shot examples from a clean commit is planned (M3).
+- Intel 4-core/8-thread laptop CPU on AC power, fresh OCR (no cache). SROIE
+  run from clean commit `2e9c77a`.
 
-**SROIE Task 3**: normalised match % (strict match % in brackets)
+All percentages are over the 50 receipts. **[a–b] is the 95 % confidence
+interval** (Wilson). With n = 50, intervals are about ±10–14 points, so small
+differences between configurations are not meaningful on their own.
+
+**SROIE Task 3**: normalised match % with 95 % CI (strict match % in brackets)
 
 | Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 | OCR-free VLM ablation |
 |---|---|---|---|
-| Company | 44.0 (36.0) | 44.0 (38.0) | TBD |
-| Date | 82.0 (70.0) | 70.0 (46.0) | TBD |
-| Address | 42.0 (6.0) | 34.0 (8.0) | TBD |
-| Total | 92.0 (76.0) | 74.0 (60.0) | TBD |
-| All 4 fields correct | 26.0 | 18.0 | TBD |
+| Company | 44.0 [31–58] (36.0) | 44.0 [31–58] (38.0) | TBD |
+| Date | 82.0 [69–90] (70.0) | 70.0 [56–81] (46.0) | TBD |
+| Address | 42.0 [29–56] (6.0) | 34.0 [22–48] (8.0) | TBD |
+| Total | 92.0 [81–97] (76.0) | 74.0 [60–84] (60.0) | TBD |
+| **All 4 fields correct** | **26.0 [16–40]** | **18.0 [10–31]** | TBD |
 | Token F1 company / address | 62.4 / 68.4 | 70.6 / 77.6 | TBD |
-| Schema compliance rate (strict-valid) | 96.0 % | 96.0 % | TBD |
-| Latency / page (CPU), median (mean) | 121.8 s (150.0 s) | 51.0 s (52.3 s) | TBD |
-| ↳ OCR / LLM, median | 74.0 s / 43.9 s | 1.0 s / 49.9 s | TBD |
+| Schema compliance (strict-valid) | 96.0 % [86–99] | 96.0 % [86–99] | TBD |
+| Latency / page, median / mean / p90 | 122 s / 150 s / 295 s | 51 s / 52 s / 66 s | TBD |
+| ↳ OCR, median / mean / p90 | 74 s / 104 s / 252 s | 1.0 s / 1.2 s / 2.0 s | TBD |
+| ↳ LLM, median / mean / p90 | 44 s / 47 s / 57 s | 50 s / 51 s / 64 s | TBD |
 
-**CORD v2 total**: normalised match % (strict match % in brackets)
+**CORD v2 total**: normalised match % with 95 % CI (strict match % in brackets)
 
-| Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 | OCR-free VLM ablation |
+| Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 ⚠️ | OCR-free VLM ablation |
 |---|---|---|---|
-| Total | 84.0 (76.0) | 14.0 (12.0) | TBD |
-| Schema compliance rate (strict-valid) | 100.0 % | 68.0 % | TBD |
-| Latency / page (CPU), median (mean) | 45.1 s (64.5 s) | 11.8 s (15.9 s) | TBD |
+| Total | 84.0 [72–92] (76.0) | 14.0 [7–26] (12.0) | TBD |
+| Schema compliance (strict-valid) | 100.0 % [93–100] | 68.0 % [54–79] | TBD |
+| Latency / page, median / mean / p90 | 45 s / 65 s / 138 s | 12 s / 16 s / 28 s | TBD |
+
+⚠️ **Tesseract on CORD is not yet a valid baseline.** Its total drops from
+74 % on SROIE to 14 % on CORD, and 12 receipts gave no JSON at all. This
+points to a setup problem (CORD is Indonesian phone photos; only English
+language data and no preprocessing were used). It's being investigated.
+
+**Where the misses come from**: OCR miss = the gold value is not in the OCR
+text at all; LLM miss = the value was in the OCR text but wasn't extracted
+correctly.
+
+| Dataset / engine | Company OCR / LLM | Date OCR / LLM | Address OCR / LLM | Total OCR / LLM | Summary |
+|---|---|---|---|---|---|
+| SROIE / PaddleOCR | 15 / 14 | 5 / 6 | 16 / 13 | 2 / 3 | roughly **equal** |
+| SROIE / Tesseract | 25 / 4 | 15 / 1 | 27 / 6 | 10 / 3 | mostly **OCR** |
+| CORD / PaddleOCR | – | – | – | 2 / 8 | mostly **LLM** |
+| CORD / Tesseract | – | – | – | 33 / 10 | mostly OCR (setup under investigation) |
+
+"In the OCR text" is an automatic text search. It can count a label/print
+difference (e.g. a label typo) as an OCR miss, so these counts are being
+checked against a manual review (M3).
 
 **Notes:**
 
-- The subsets are small (50 receipts), so each receipt is 2 percentage points.
+- The subsets are small (50 receipts): each receipt is 2 percentage points,
+  hence the confidence intervals above.
 - Labels are used as released, with no manual corrections. Some SROIE labels
   contain typos (e.g. a postcode `B1750` for `81750`), and 5 duplicate-image
   groups have conflicting labels, so a perfect extractor would not reach
@@ -314,15 +342,15 @@ Results go to `evaluation/results/<run_id>/`:
 - Latency is measured with the model already loaded and the few-shot prompt
   prefix already read. It excludes model load (~4 s) and the one-off warm-up
   per engine (~70–100 s).
+  - "About 2 minutes per receipt" is the **median**. The mean is 150 s, and
+    1 receipt in 10 takes ≥ 295 s.
   - 9 of the 50 SROIE receipts are 35 MP scans, which take ~240–315 s of
-    PaddleOCR each; that's why the mean is well above the median.
+    PaddleOCR each; they produce the long tail.
   - CORD prompts are shorter, so the LLM is faster there.
 - **Reproducibility:** an earlier run of the same SROIE subset
   (`20260930-030537`) produced identical OCR text and identical raw LLM
   output for all 100 receipt × engine runs. Only its timings differed: that
   run was partly on battery, and the laptop slept once.
-- Tesseract fails badly on CORD (camera photos): the total is in its OCR text
-  for only 34 % of receipts, and on 12 receipts it produced no JSON.
 - Per-receipt results: [`evaluation/results/`](evaluation/results/).
 
 ## Status

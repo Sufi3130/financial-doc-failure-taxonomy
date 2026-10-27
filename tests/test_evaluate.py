@@ -73,6 +73,28 @@ def test_missing_row_and_failed_output_count_as_wrong():
     assert summary["latency_s"]["total_s"]["n"] == 2  # the never-run receipt has no timing
 
 
+def test_wilson_ci():
+    from evaluation.evaluate import wilson_ci
+    assert wilson_ci(46, 50) == [81.2, 96.8]   # 92 % of 50 is uncertain by about +-8 points
+    assert wilson_ci(13, 50) == [15.9, 39.6]   # 26 % (all fields correct, PaddleOCR SROIE)
+    assert wilson_ci(0, 50)[0] == 0.0 and wilson_ci(50, 50)[1] == 100.0
+    assert wilson_ci(0, 0) is None
+
+
+def test_ci_and_latency_stats_in_summary():
+    results = [score_receipt(sroie(f"r{i}"), {**row(f"r{i}", {"company": "OJC MARKETING SDN. BHD.",
+                                                                 "date": "15/01/2019", "address": "NO 2, JALAN BAYU 4",
+                                                                 "total": "RM 193.00"}),
+                                              "timings": {"ocr_s": 10.0 * i, "llm_s": 40.0, "total_s": 50.0 + i}})
+               for i in range(1, 11)]
+    s = summarize(results)
+    assert s["fields"]["total"]["normalized_acc_ci95"] == [72.2, 100.0]
+    assert s["all_fields_normalized_acc_ci95"] == [72.2, 100.0]
+    assert s["schema"]["strict_valid_rate_ci95"] == [72.2, 100.0]
+    ocr = s["latency_s"]["ocr_s"]
+    assert (ocr["median"], ocr["mean"], ocr["p90"], ocr["min"], ocr["max"]) == (55.0, 55.0, 91.0, 10.0, 100.0)
+
+
 def test_token_f1():
     assert token_f1("NO 2, JALAN BAYU 4", "NO 2 JALAN BAYU 4") == 1.0
     assert token_f1("JALAN BAYU", "NO 2 JALAN BAYU 4") == pytest.approx(0.5714, abs=1e-4)

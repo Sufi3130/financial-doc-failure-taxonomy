@@ -36,16 +36,36 @@
     "total": {
      "scored": 50,
      "strict_acc": 76.0,
+     "strict_acc_ci95": [
+      62.6,
+      85.7
+     ],
      "normalized_acc": 84.0,
+     "normalized_acc_ci95": [
+      71.5,
+      91.7
+     ],
      "in_ocr": 96.0,
      "ocr_miss": 2,
      "llm_miss_given_in_ocr": 8
     }
    },
    "all_fields_normalized_acc": 84.0,
+   "all_fields_normalized_acc_ci95": [
+    71.5,
+    91.7
+   ],
    "schema": {
     "strict_valid_rate": 100.0,
+    "strict_valid_rate_ci95": [
+     92.9,
+     100.0
+    ],
     "schema_valid_rate": 100.0,
+    "schema_valid_rate_ci95": [
+     92.9,
+     100.0
+    ],
     "failure_counts": {
      "null_field": 24
     }
@@ -54,26 +74,41 @@
     "ocr_s": {
      "mean": 49.4,
      "median": 31.4,
+     "p90": 126.3,
+     "min": 12.7,
+     "max": 249.6,
      "n": 50
     },
     "llm_s": {
      "mean": 15.1,
      "median": 14.6,
+     "p90": 21.5,
+     "min": 7.3,
+     "max": 24.5,
      "n": 50
     },
     "llm_prompt_s": {
      "mean": 6.8,
      "median": 6.4,
+     "p90": 10.1,
+     "min": 2.5,
+     "max": 16.5,
      "n": 50
     },
     "llm_gen_s": {
      "mean": 8.3,
      "median": 7.5,
+     "p90": 12.9,
+     "min": 4.2,
+     "max": 16.6,
      "n": 50
     },
     "total_s": {
      "mean": 64.5,
      "median": 45.1,
+     "p90": 137.7,
+     "min": 25.4,
+     "max": 270.9,
      "n": 50
     },
     "power": {
@@ -88,16 +123,36 @@
     "total": {
      "scored": 50,
      "strict_acc": 12.0,
+     "strict_acc_ci95": [
+      5.6,
+      23.8
+     ],
      "normalized_acc": 14.0,
+     "normalized_acc_ci95": [
+      7.0,
+      26.2
+     ],
      "in_ocr": 34.0,
      "ocr_miss": 33,
      "llm_miss_given_in_ocr": 10
     }
    },
    "all_fields_normalized_acc": 14.0,
+   "all_fields_normalized_acc_ci95": [
+    7.0,
+    26.2
+   ],
    "schema": {
     "strict_valid_rate": 68.0,
+    "strict_valid_rate_ci95": [
+     54.2,
+     79.2
+    ],
     "schema_valid_rate": 70.0,
+    "schema_valid_rate_ci95": [
+     56.2,
+     80.9
+    ],
     "failure_counts": {
      "null_field": 11,
      "no_json": 12,
@@ -110,26 +165,41 @@
     "ocr_s": {
      "mean": 0.6,
      "median": 0.4,
+     "p90": 1.0,
+     "min": 0.3,
+     "max": 3.7,
      "n": 50
     },
     "llm_s": {
      "mean": 15.3,
      "median": 11.2,
+     "p90": 25.1,
+     "min": 4.2,
+     "max": 49.7,
      "n": 50
     },
     "llm_prompt_s": {
      "mean": 3.7,
      "median": 2.6,
+     "p90": 7.3,
+     "min": 0.0,
+     "max": 20.6,
      "n": 50
     },
     "llm_gen_s": {
      "mean": 11.5,
      "median": 9.3,
+     "p90": 18.5,
+     "min": 1.8,
+     "max": 46.1,
      "n": 50
     },
     "total_s": {
      "mean": 15.9,
      "median": 11.8,
+     "p90": 27.5,
+     "min": 4.6,
+     "max": 51.5,
      "n": 50
     },
     "power": {

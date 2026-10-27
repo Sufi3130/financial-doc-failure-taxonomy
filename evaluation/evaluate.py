@@ -138,12 +138,25 @@ def _pct(n, d):
     return round(100 * n / d, 1) if d else None
 
 
+def wilson_ci(k, n, z=1.96):
+    """95% Wilson score interval for k successes out of n, in percent.
+    Unlike the normal approximation it stays inside [0, 100] and behaves at
+    small n (50 receipts) and at rates near 0 or 100%."""
+    if not n:
+        return None
+    p = k / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+    return [round(100 * max(0.0, centre - half), 1), round(100 * min(1.0, centre + half), 1)]
+
+
 def _stats(values):
-    values = [v for v in values if v is not None]
+    values = sorted(v for v in values if v is not None)
     if not values:
         return None
+    p90 = statistics.quantiles(values, n=10, method="inclusive")[-1] if len(values) > 1 else values[0]
     return {"mean": round(statistics.mean(values), 1), "median": round(statistics.median(values), 1),
-            "n": len(values)}
+            "p90": round(p90, 1), "min": round(values[0], 1), "max": round(values[-1], 1), "n": len(values)}
 
 
 def summarize(results):
@@ -153,11 +166,12 @@ def summarize(results):
     for field in fields:
         scored = [r["fields"][field] for r in results if field in r["fields"]]
         d = len(scored)
+        strict, norm, in_ocr = (sum(e[k] for e in scored) for k in ("strict", "normalized", "in_ocr"))
         s = {
             "scored": d,
-            "strict_acc": _pct(sum(e["strict"] for e in scored), d),
-            "normalized_acc": _pct(sum(e["normalized"] for e in scored), d),
-            "in_ocr": _pct(sum(e["in_ocr"] for e in scored), d),
+            "strict_acc": _pct(strict, d), "strict_acc_ci95": wilson_ci(strict, d),
+            "normalized_acc": _pct(norm, d), "normalized_acc_ci95": wilson_ci(norm, d),
+            "in_ocr": _pct(in_ocr, d),
             "ocr_miss": sum(not e["in_ocr"] for e in scored),
             "llm_miss_given_in_ocr": sum(e["in_ocr"] and not e["normalized"] for e in scored),
         }
@@ -165,11 +179,13 @@ def summarize(results):
             s["mean_token_f1"] = round(100 * statistics.mean(e["token_f1"] for e in scored), 1)
         out["fields"][field] = s
     complete = [r for r in results if all(f in r["fields"] for f in fields)]
-    out["all_fields_normalized_acc"] = _pct(
-        sum(all(r["fields"][f]["normalized"] for f in fields) for r in complete), len(complete))
+    all_ok = sum(all(r["fields"][f]["normalized"] for f in fields) for r in complete)
+    out["all_fields_normalized_acc"] = _pct(all_ok, len(complete))
+    out["all_fields_normalized_acc_ci95"] = wilson_ci(all_ok, len(complete))
+    strict_valid, schema_valid = sum(r["strict_valid"] for r in results), sum(r["schema_valid"] for r in results)
     out["schema"] = {
-        "strict_valid_rate": _pct(sum(r["strict_valid"] for r in results), n),
-        "schema_valid_rate": _pct(sum(r["schema_valid"] for r in results), n),
+        "strict_valid_rate": _pct(strict_valid, n), "strict_valid_rate_ci95": wilson_ci(strict_valid, n),
+        "schema_valid_rate": _pct(schema_valid, n), "schema_valid_rate_ci95": wilson_ci(schema_valid, n),
         "failure_counts": dict(Counter(f for r in results for f in r["failures"])),
     }
     timed = [r for r in results if not r["error"]]
@@ -244,18 +260,21 @@ def write_results(run_dir, manifest, records, per_receipt, summaries, out_root=R
 def print_summary(summaries):
     for engine, s in summaries.items():
         print(f"\n== {engine}: {s['receipts']} receipts, {s['errors']} errors")
-        print(f"   {'field':8} {'strict':>7} {'norm':>7} {'tokF1':>6} {'inOCR':>6} {'OCRmiss':>8} {'LLMmiss':>8}")
+        ci = lambda c: f"[{c[0]:.0f}-{c[1]:.0f}]" if c else ""  # noqa: E731
+        print(f"   {'field':8} {'strict':>7} {'norm':>7} {'norm 95% CI':>12} {'tokF1':>6} {'inOCR':>6} "
+              f"{'OCRmiss':>8} {'LLMmiss':>8}")
         for f, x in s["fields"].items():
             f1 = x.get("mean_token_f1")
-            print(f"   {f:8} {x['strict_acc']:>6}% {x['normalized_acc']:>6}% {'' if f1 is None else f1:>6} "
-                  f"{x['in_ocr']:>5}% {x['ocr_miss']:>8} {x['llm_miss_given_in_ocr']:>8}")
-        print(f"   all fields correct (normalised): {s['all_fields_normalized_acc']}%")
+            print(f"   {f:8} {x['strict_acc']:>6}% {x['normalized_acc']:>6}% {ci(x['normalized_acc_ci95']):>12} "
+                  f"{'' if f1 is None else f1:>6} {x['in_ocr']:>5}% {x['ocr_miss']:>8} {x['llm_miss_given_in_ocr']:>8}")
+        print(f"   all fields correct (normalised): {s['all_fields_normalized_acc']}% "
+              f"{ci(s['all_fields_normalized_acc_ci95'])}")
         sc = s["schema"]
-        print(f"   schema: strict_valid {sc['strict_valid_rate']}%, schema_valid {sc['schema_valid_rate']}%, "
-              f"failures {sc['failure_counts'] or '-'}")
+        print(f"   schema: strict_valid {sc['strict_valid_rate']}% {ci(sc['strict_valid_rate_ci95'])}, "
+              f"schema_valid {sc['schema_valid_rate']}%, failures {sc['failure_counts'] or '-'}")
         lat = s["latency_s"]
-        print("   latency s/page: " + ", ".join(
-            f"{k[:-2]} {v['median']} (mean {v['mean']})" for k, v in lat.items() if k != "power" and v)
+        print("   latency s/page (median / mean / p90): " + ", ".join(
+            f"{k[:-2]} {v['median']} / {v['mean']} / {v['p90']}" for k, v in lat.items() if k != "power" and v)
               + f"  power {lat['power']}")
 
 
