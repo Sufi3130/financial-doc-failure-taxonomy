@@ -387,6 +387,26 @@ This is the thesis's core comparison. Runs `20260930-063807` / `20261027-183737`
 - Qwen and Llama both read **company and address far better** than Phi-3
   (token F1 ~74–84 vs 62–68).
 
+### OCR-free VLM ablation
+
+A vision-language model reads the receipt **image directly** and outputs JSON,
+replacing the OCR + LLM stages with one end-to-end step (`src/vlm.py`,
+Qwen2.5-VL-3B via llama-cpp-python, CPU). The controlled comparison is
+**Qwen2.5-3B fed OCR text vs Qwen2.5-VL-3B fed the image** — same family and
+size, so the only difference is the OCR stage. It answers: *is a dedicated OCR
+stage worth it, or should the model read the image itself?*
+
+```bash
+python -m src.vlm --manifest evaluation/datasets/SROIE/subset_test_50.jsonl
+```
+
+The VLM is **much slower on CPU** (~3–4 min/receipt; the vision encoder
+dominates), zero-shot, with images capped at 1280 px. Results are scored by
+the same `evaluate.py`. _Full results pending (overnight run)._ A known
+trade-off: the VLM is a **black box** — with no intermediate OCR text, a wrong
+field cannot be attributed to reading vs extraction, unlike the two-stage
+pipeline.
+
 **Where the misses come from** (Phi-3): OCR miss = the gold value is not in the OCR
 text at all; LLM miss = the value was in the OCR text but wasn't extracted
 correctly.
