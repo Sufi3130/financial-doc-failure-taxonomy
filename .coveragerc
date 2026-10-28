@@ -1,0 +1,28 @@
+# Coverage configuration for the test suite.
+#
+# Scope is the project code (src/, evaluation/, app/). We omit two kinds of
+# files that the fast, dependency-free suite cannot meaningfully cover, and
+# document them in docs/testing.md instead of hiding the gap:
+#   - app/app.py          the Streamlit *render* layer (all logic is in
+#                         app/service.py, which IS measured); exercised by a
+#                         manual headless-boot check, not unit tests.
+#   - */__main__.py       thin argparse CLI entry points.
+# The real model-loading / inference lines (in src/extraction/llm.py,
+# src/ocr/paddle.py, src/ocr/tesseract.py, src/vlm.py) are deliberately left
+# IN scope: they show as missing in the fast suite and are covered by the
+# gated integration test (tests/test_integration.py) when the models and
+# libraries are present, plus scripts/check_env.py.
+
+[run]
+source = src, evaluation, app
+omit =
+    */__main__.py
+    app/app.py
+    */make_fixtures.py
+    tests/*
+
+[report]
+show_missing = True
+exclude_also =
+    if __name__ == .__main__.:
+    raise NotImplementedError
