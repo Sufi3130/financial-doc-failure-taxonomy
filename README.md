@@ -251,25 +251,33 @@ Options: `--engine paddleocr|tesseract|all` (default `paddleocr`),
 
 ## Run the UI
 
-A local Streamlit app wraps the same pipeline for interactive use:
+A local Streamlit app wraps the same pipeline for interactive use. Streamlit is
+in `requirements.txt`, so after the setup above just run (from the repo root):
 
 ```bash
 streamlit run app/app.py          # opens http://localhost:8501
 ```
 
 It runs **entirely on this machine** — no image or label leaves it. The server
-binds to `localhost` and Streamlit's telemetry is off (`.streamlit/config.toml`),
-which is the project's GDPR point, demonstrated. Two tabs:
+binds to `localhost`, keeps CORS/XSRF protection on and Streamlit's telemetry off
+(`.streamlit/config.toml`); uploads are processed in a temporary folder. This is
+the project's GDPR point, demonstrated. A left sidebar navigates three tools plus
+a home page (the current page is in the URL, so refresh and Back/Forward work):
 
 - **Extract & Explain** — one receipt (upload an image, or pick a dataset one).
-  Choose the OCR engine + LLM, or the **OCR-free VLM**. Shows the image with OCR
-  boxes (coloured by confidence), the reading-order text, the raw model output,
-  the validated JSON, the failure tags and timings. With a label — a dataset
-  receipt, or values you type for your own upload — it adds a **per-field
-  comparison** and the stage that failed (OCR vs LLM). Without a label it still
-  flags **hallucinations** (values not present in the OCR text).
-- **Dataset Evaluation** — a built-in 50-receipt subset, or **your own labelled
-  dataset**. Upload a ZIP containing your images and a `labels.csv`:
+  Choose the OCR engine + LLM, or the **OCR-free VLM**. A staged progress bar
+  shows each phase (load → OCR → model → parse). Shows the image with OCR boxes
+  (coloured by confidence), the reading-order text, the raw model output, the
+  validated JSON, the timings, and — with a label (a dataset receipt, or values
+  you type for an upload) — a **per-field comparison**, the stage that failed
+  (OCR vs LLM), and a plain-language **reason for each wrong field**. Without a
+  label it flags **hallucinations** (values not present in the OCR text).
+- **Compare models** — run any mix of **Phi-3 / Qwen2.5-3B / Llama-3.2-3B / the
+  OCR-free VLM** on one receipt, side by side: each model's four fields,
+  correct/wrong (with a label), JSON validity, failure categories and timing.
+- **Dataset Evaluation** — a single image, a built-in 50-receipt subset, or
+  **your own labelled dataset**. For an upload, drop a ZIP of images plus a
+  `labels.csv`:
 
   ```text
   images/            the receipt images
@@ -277,10 +285,11 @@ which is the project's GDPR point, demonstrated. Two tabs:
   ```
 
   Any field may be blank (only filled fields are scored; `labels.jsonl` also
-  works). The app runs the whole pipeline, then shows accuracy with 95%
-  confidence intervals, the failure-taxonomy counts, and a per-receipt table you
-  can **filter by failure category** and drill into. Runs are slow on CPU
-  (~1–4 min per uncached receipt).
+  works). The engine list includes the **OCR-free VLM**. The app runs the whole
+  pipeline, then shows accuracy with 95% confidence intervals, the
+  failure-taxonomy counts, and a per-receipt table you can **filter by failure
+  category** and drill into. Runs are slow on CPU (~1–4 min per uncached receipt;
+  the VLM ~3–4 min).
 
 The UI logic lives in `app/service.py`, kept free of Streamlit so it is
 unit-tested (`tests/test_app.py`); `app/app.py` only renders.
