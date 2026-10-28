@@ -1,6 +1,7 @@
 """End-to-end smoke test: fixture manifest -> pipeline (mocked OCR + LLM) -> run log -> evaluator."""
 
 import json
+import types
 from pathlib import Path
 
 from src.extraction import Generation
@@ -40,6 +41,7 @@ class FixtureLLM:
 
     def __init__(self):
         self.calls = 0
+        self.settings = types.SimpleNamespace(grammar=False)
 
     def generate(self, messages, max_tokens=None):
         self.calls += 1

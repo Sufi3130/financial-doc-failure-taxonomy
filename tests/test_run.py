@@ -37,10 +37,16 @@ class FakeEngine(OCREngine):
         return {"x": 1}
 
 
+class _FakeSettings:
+    def __init__(self, grammar=False):
+        self.grammar = grammar
+
+
 class FakeLLM:
-    def __init__(self, outputs=None):
+    def __init__(self, outputs=None, grammar=False):
         self.outputs = outputs or {}
         self.prompts = []
+        self.settings = _FakeSettings(grammar=grammar)
 
     def generate(self, messages, max_tokens=None):
         text = messages[-1]["content"]

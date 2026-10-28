@@ -100,8 +100,8 @@ h2,h3 {letter-spacing:-0.01em;}
 
 # ------------------------------------------------------------------ cached heavy objects
 @st.cache_resource(show_spinner=False)
-def get_llm(model_name):
-    return service.load_llm(model_name)
+def get_llm(model_name, grammar=False):
+    return service.load_llm(model_name, grammar=grammar)
 
 
 @st.cache_resource(show_spinner=False)
@@ -125,13 +125,14 @@ def image_path_of(record):
     return p if p.is_absolute() else REPO_ROOT / p
 
 
-def run_model(record, model_name, engine_name="paddleocr", shots=2, prompt_version=service.DEFAULT_PROMPT):
+def run_model(record, model_name, engine_name="paddleocr", shots=2, prompt_version=service.DEFAULT_PROMPT,
+              grammar=False):
     """Run one receipt with one model (text pipeline or VLM). Returns a run row."""
     if service.is_vlm_engine(model_name):
         vlm = get_vlm(model_name)
         return service.extract_vlm(record, vlm)
     engine = get_engine(engine_name)
-    llm = get_llm(model_name)
+    llm = get_llm(model_name, grammar=grammar)
     ids, examples = service.fewshot(engine, shots=shots)
     return service.extract(record, engine, llm, examples, ids, prompt_version=prompt_version)
 
@@ -152,7 +153,7 @@ def _run_with_progress(record, choice, bar):
     bar.progress(0.1, text="Loading the OCR engine…")
     engine = get_engine(choice["engine"])
     bar.progress(0.3, text="Loading the model (first time is slow)…")
-    llm = get_llm(choice["model"])
+    llm = get_llm(choice["model"], grammar=choice.get("grammar", False))
     bar.progress(0.42, text="Preparing few-shot examples…")
     ids, examples = service.fewshot(engine, shots=choice["shots"])
     row = service.extract(record, engine, llm, examples, ids,
@@ -334,7 +335,12 @@ def tab_extract():
                                 format_func=lambda v: f"{v} — {_PROMPT_DESC[v]}")
         model = c3.selectbox("LLM", service.TEXT_MODELS, format_func=lambda m: MODEL_LABELS.get(m, m))
         shots = c3.radio("Few-shot", [2, 0], format_func=lambda k: f"{k}-shot", horizontal=True)
-        choice = {"vlm": False, "engine": engine, "model": model, "shots": shots, "prompt": prompt_v}
+        grammar_on = st.checkbox(
+            "Constrain output to the JSON schema (grammar)", key="ex_grammar",
+            help="Issue #25: force valid Receipt JSON via a GBNF grammar (eliminates malformed_json; "
+                 "empty pages answer all-null). Off by default so the baseline still shows format failures.")
+        choice = {"vlm": False, "engine": engine, "model": model, "shots": shots,
+                  "prompt": prompt_v, "grammar": grammar_on}
 
     if record and not choice["vlm"] and not service.ocr_cached(choice["engine"], record):
         st.info("🆕 This receipt has not been read before, so the OCR step will run fresh — "
@@ -371,6 +377,9 @@ def tab_compare():
     engine = c1.selectbox("OCR engine (for the text models)", service.OCR_ENGINES, key="cmp_engine")
     prompt_v = c2.selectbox("Prompt (for the text models)", service.PROMPTS, key="cmp_prompt",
                             format_func=lambda v: f"{v} — {_PROMPT_DESC[v]}")
+    grammar_on = st.checkbox(
+        "Constrain output to the JSON schema (grammar)", key="cmp_grammar",
+        help="Issue #25: force valid Receipt JSON via a GBNF grammar. Off by default.")
 
     if record and not service.ocr_cached(engine, record):
         st.info("🆕 This receipt has not been read before, so the OCR step will run fresh — "
@@ -383,7 +392,7 @@ def tab_compare():
             slow = " (VLM — slow)" if service.is_vlm_engine(model) else ""
             bar.progress((i - 1) / len(chosen), text=f"{MODEL_LABELS.get(model, model)}{slow}…")
             try:
-                rows[model] = run_model(record, model, engine, prompt_version=prompt_v)
+                rows[model] = run_model(record, model, engine, prompt_version=prompt_v, grammar=grammar_on)
             except Exception as exc:
                 st.error(f"{MODEL_LABELS.get(model, model)} failed: {type(exc).__name__}: {exc}")
         bar.progress(1.0, text="done")
