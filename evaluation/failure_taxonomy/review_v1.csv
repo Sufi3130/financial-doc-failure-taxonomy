@@ -1,0 +1,51 @@
+review_id,status,dataset,engine,model,receipt_id,field,auto_primary,auto_subtype,auto_tags,ocr_subkind_hint,ocr_subkind,root_cause,reviewed_category,note,reviewer
+R01,done,SROIE,paddleocr,Phi-3,X51005757342,total,malformed_json,derailment,,,,,malformed_json:derailment,"Output derails after 'MR. D.I' and nothing is usable. OCR read the total correctly. OCR also garbled the date line ('23-03-18 16:43' -> '23-1:1173 186'), so the date was an OCR failure too, hidden behind the derailment.",Sufyan (checked against the image; first pass by Claude)
+R02,done,SROIE,paddleocr,Phi-3,X51005568890,address,value_not_in_ocr,,value_not_in_ocr,,,,value_not_in_ocr,"Printed 'MANIS'; OCR misread the A, and the model copied it. Other OCR letter errors on the receipt: Qty->Oty, returnable->teturnable.",Sufyan (checked against the image; first pass by Claude)
+R03,done,SROIE,paddleocr,Phi-3,X51005764161,date,wrong_date_format,unparseable,,,,,wrong_date_format,"OCR read '28-01-18' correctly; the model wrote '011-02-18'. PaddleOCR garbled the faded header (company/address), and the model then invented an address ('...GROSS STREET, 569004, KUALA LUMPUR'). Tesseract read this header better.",Sufyan (checked against the image; first pass by Claude)
+R04,done,SROIE,tesseract,Phi-3,X51007846400,total,wrong_total,amount_not_in_ocr,ocr_confidence_low:receipt,,,,value_not_in_ocr,"Large bold 'Total : RM 152.90' read by Tesseract as '4§2,90'; 152.90 survives only on the cash row. Tesseract also turned the logo drawing into fake text and lost the phone row.",Sufyan (checked against the image; first pass by Claude)
+R05,done,SROIE,tesseract,Phi-3,X51007846400,company,partial_value,,ocr_confidence_low:receipt,,,,label_definition_ambiguity,"Both printed: brand 'NAM SAN SEOUL KOREAN BBQ' (model) and legal name 'KOREAN DINE SDN BHD' (label), with no role stated. Not counted as a model error.",Sufyan (checked against the image; first pass by Claude)
+R06,done,SROIE,paddleocr,Phi-3,X51006008206,address,boundary_too_wide,adjacent_text,,,,,boundary_too_wide:adjacent_text,OCR correct; the address includes the registration number '434286-P' from the next line.,Sufyan (checked against the image; first pass by Claude)
+R07,done,SROIE,paddleocr,Phi-3,X51006008090,company,boundary_too_narrow,,,,,,boundary_too_narrow,"Name printed on two lines; one line kept. Other OCR errors: dots read as 'e'/'0', 'TOTAL SAVING' misread, one line omitted, '%%' inserted.",Sufyan (checked against the image; first pass by Claude)
+R08,done,SROIE,paddleocr,Phi-3,X51006556851,company,wrong_entity,,,,,,wrong_entity,Model returned the customer (Makassar Fresh Market) instead of the seller (Gardenia). A real error. OCR garbled the excl.-GST row.,Sufyan (checked against the image; first pass by Claude)
+R09,done,SROIE,paddleocr,Phi-3,X51006008206,date,copy_corruption,,,,,,copy_corruption,Printed and OCR '2018/03/27'; the model wrote '2e18/03/27'.,Sufyan (checked against the image; first pass by Claude)
+R10,done,SROIE,tesseract,Phi-3,X51005749904,total,malformed_json,prose_instead_of_json,ocr_confidence_low:receipt;ocr_empty_page;value_not_in_ocr,,,,malformed_json:prose_instead_of_json,"Faded but readable ink; Tesseract read nothing, and the model wrote prose instead of all-null JSON. PaddleOCR read the same receipt (3 of 4 fields correct).",Sufyan (checked against the image; first pass by Claude)
+R11,done,SROIE,paddleocr,Phi-3,X51005361912,company,value_not_in_ocr,,value_not_in_ocr,,,,value_not_in_ocr,"Printed 'TEO'; OCR read 'TED' (O->D), and the model copied it.",Sufyan (checked against the image; first pass by Claude)
+R12,done,CORD,tesseract,Phi-3,validation_050,total,wrong_total,scale_error,,,,,copy_corruption,"OCR 'TOTAL 26,000'; the model wrote '26,00 CV'. Tesseract read only 2 rows (cash -> 'cs'). Company 'TOTAL' instead of null. PaddleOCR read all rows and got the total right, but its model also filled company/date with nonsense.",Sufyan (checked against the image; first pass by Claude)
+R13,done,SROIE,paddleocr,Phi-3,X51005230605,company,wrong_entity,,,,,,label_definition_ambiguity,"Both printed: station brand 'PETRON BKT LANJAN SB' (label) and operator 'ALSERKAM ENTERPRISE' (model), with no role stated. The prompt doesn't say which is meant.",Sufyan (checked against the image; first pass by Claude)
+R14,done,SROIE,tesseract,Phi-3,X51007339109,address,boundary_too_wide,hallucinated_extension,,,,,boundary_too_wide:hallucinated_extension,"'KUALA LUMPUR' is not printed, so it was invented. Tesseract lost almost the whole right-hand amount column, plus SDN->SON and wrong registration digits.",Sufyan (checked against the image; first pass by Claude)
+R15,done,SROIE,paddleocr,Phi-3,X51006619506,company,boundary_too_narrow,,,,,,boundary_too_narrow,"Two-line name, first line only. OCR dropped spaces between words ('JALANLANGKUNING', 'KEPONGBARU') and skipped item text.",Sufyan (checked against the image; first pass by Claude)
+R16,done,SROIE,paddleocr,Phi-3,X51007339109,company,wrong_entity,,,,,,wrong_entity,"Shop 'SANYU STATIONERY SHOP' (label) vs 'Owned By: SANYU SUPPLY SDN BHD' (model). 'Owned By' states the role, so this is a real error, not an ambiguity.",Sufyan (checked against the image; first pass by Claude)
+R17,done,SROIE,paddleocr,Phi-3,X51006556851,address,wrong_entity,,,,,,wrong_entity,Customer's address (Subang Jaya) instead of the seller's (Shah Alam); same receipt as R08.,Sufyan (checked against the image; first pass by Claude)
+R18,done,CORD,tesseract,Phi-3,validation_080,total,malformed_json,derailment,,,,,malformed_json:derailment,"Derailed mid-total into a letter about Newton's First Law; 'N/A' instead of null. Tesseract: 3 rows, cash 25 000 misread as '29 000'. PaddleOCR got the total right but put an item line into the date.",Sufyan (checked against the image; first pass by Claude)
+R19,done,SROIE,paddleocr,Phi-3,X51005746204,date,value_not_in_ocr,,value_not_in_ocr,,,,value_not_in_ocr,"'27/MAR/2018' read as '27/Ma1/2018' (R->1). PaddleOCR garbled the header; the model put garbage plus the GST number in company and wrote 'Not provided in the text' for the address. Tesseract read the header better. Label address 'JALAN DLNARG U3/G': print badly degraded ('Dliar G'); street most likely 'DINAR G', so probable label noise (not provable).",Sufyan (checked against the image; first pass by Claude)
+R20,done,CORD,paddleocr,Phi-3,test_071,total,wrong_total,other_amount_on_receipt:cash,,,,,wrong_total:other_amount_on_receipt:cash,"No 'Total' line: Sub Total 198000 (label), 'Tunai' (= cash, Indonesian) 200200 (model), 'Kembalian' (= change) 22000. Item name as company. The change doesn't add up on the receipt.",Sufyan (checked against the image; first pass by Claude)
+R21,todo,SROIE,paddleocr,Phi-3,X51005677333,address,value_not_in_ocr,,value_not_in_ocr,,,,,,
+R22,todo,SROIE,tesseract,Phi-3,X51006828201,address,value_not_in_ocr,,ocr_confidence_low:receipt;value_not_in_ocr,,,,,,
+R23,todo,CORD,tesseract,Phi-3,test_066,total,value_not_in_ocr,,empty_field;ocr_confidence_low:receipt;ocr_empty_page;value_not_in_ocr,empty_page,,,,,
+R24,todo,CORD,paddleocr,Llama-3.2-3B,test_059,total,value_not_in_ocr,,ocr_confidence_low:receipt;value_not_in_ocr,,,,,,
+R25,todo,SROIE,paddleocr,Phi-3,X51005337867,company,value_not_in_ocr,,value_not_in_ocr,,,,,,
+R26,todo,SROIE,tesseract,Phi-3,X51006555819,company,value_not_in_ocr,,ocr_confidence_low:receipt;value_not_in_ocr,,,,,,
+R27,todo,CORD,tesseract,Phi-3,validation_019,total,value_not_in_ocr,,ocr_confidence_low:receipt;value_not_in_ocr,,,,,,
+R28,todo,SROIE,paddleocr,Phi-3,X51006414702,address,value_not_in_ocr,,empty_field;value_not_in_ocr,,,,,,
+R29,todo,SROIE,tesseract,Phi-3,X51006332641,date,value_not_in_ocr,,ocr_confidence_low:receipt;value_not_in_ocr,,,,,,
+R30,todo,CORD,tesseract,Phi-3,test_029,total,value_not_in_ocr,,fewshot_copy;value_not_in_ocr,,,,,,
+R31,todo,SROIE,paddleocr,Phi-3,X51005746204,company,value_not_in_ocr,,value_not_in_ocr,,,,,,
+R32,todo,SROIE,tesseract,Phi-3,X51005746204,address,value_not_in_ocr,,ocr_confidence_low:receipt;value_not_in_ocr,,,,,,
+R33,todo,CORD,tesseract,Phi-3,validation_096,total,value_not_in_ocr,,empty_field;ocr_confidence_low:receipt;ocr_empty_page;value_not_in_ocr,empty_page,,,,,
+R34,todo,SROIE,paddleocr,Qwen2.5-3B,X51006392167,company,value_not_in_ocr,,value_not_in_ocr,,,,,,
+R35,todo,SROIE,tesseract,Phi-3,X51005764161,total,value_not_in_ocr,,ocr_confidence_low:receipt;value_not_in_ocr,,,,,,
+R36,todo,SROIE,tesseract,Qwen2.5-3B,X51006557115,address,wrong_entity,,ocr_confidence_low;ocr_confidence_low:receipt,,,,,,
+R37,todo,SROIE,paddleocr,Phi-3,X51007846400,company,partial_value,,,,,,,,
+R38,todo,SROIE,paddleocr,Qwen2.5-3B,X51007846400,company,partial_value,,,,,,,,
+R39,todo,SROIE,paddleocr,Qwen2.5-3B,X51006401853,company,boundary_too_narrow,,,,,,,,
+R40,todo,SROIE,tesseract,Llama-3.2-3B,X51005568895,total,wrong_total,other_amount_on_receipt,,,,,,,
+R41,todo,SROIE,paddleocr,Phi-3,X51006619570,company,malformed_json,derailment,,,,,,,
+R42,todo,SROIE,paddleocr,Llama-3.2-3B,X51006311714,address,boundary_too_narrow,,,,,,,,
+R43,todo,SROIE,paddleocr,Phi-3,X51006311714,address,boundary_too_wide,hallucinated_extension,,,,,,,
+R44,todo,SROIE,tesseract,Llama-3.2-3B,X51005749904,address,malformed_json,prose_instead_of_json,ocr_confidence_low:receipt;ocr_empty_page;value_not_in_ocr,empty_page,,,,,
+R45,todo,SROIE,paddleocr,Phi-3,X51007579714,company,wrong_entity,,,,,,,,
+R46,todo,SROIE,paddleocr,Qwen2.5-3B,X51005433556,company,boundary_too_wide,adjacent_text,,,,,,,
+R47,todo,CORD,tesseract,Qwen2.5-3B,test_063,total,wrong_total,other_amount_on_receipt:cash,ocr_confidence_low,,,,,,
+R48,todo,SROIE,paddleocr,Llama-3.2-3B,X51006555819,address,wrong_entity,,,,,,,,
+R49,todo,SROIE,paddleocr,Phi-3,X51005433556,address,boundary_too_narrow,,,,,,,,
+R50,todo,SROIE,paddleocr,Phi-3,X51006332641,date,wrong_value,other_date,,,,,,,
