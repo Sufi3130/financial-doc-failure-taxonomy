@@ -2,6 +2,3 @@
 # pip install -r requirements-later.txt
 
 scikit-learn
-
-# App
-streamlit

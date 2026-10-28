@@ -19,9 +19,9 @@ financial document extraction using small local models.
   milestone tracking
 - `src/ocr/` — OCR engines (PaddleOCR, Tesseract) behind one interface, reading-order text, run logs
 - `src/extraction/` — LLM prompt templates, JSON schema, extraction logic
-- `src/vlm_ablation/` — OCR-free VLM comparison pipeline
+- `src/vlm.py` — OCR-free VLM ablation (image → JSON, end-to-end)
 - `evaluation/` — dataset prep, metrics, failure taxonomy annotations
-- `app/` — Streamlit demo application
+- `app/` — Streamlit UI (`app.py` renders; `service.py` holds the testable logic)
 - `tests/` — unit/integration tests
 
 ## Setup
@@ -248,6 +248,42 @@ Options: `--engine paddleocr|tesseract|all` (default `paddleocr`),
   - `--resume` skips receipts already logged without an error, and retries
     failed ones by appending a new line. Use the last line per
     engine + receipt.
+
+## Run the UI
+
+A local Streamlit app wraps the same pipeline for interactive use:
+
+```bash
+streamlit run app/app.py          # opens http://localhost:8501
+```
+
+It runs **entirely on this machine** — no image or label leaves it. The server
+binds to `localhost` and Streamlit's telemetry is off (`.streamlit/config.toml`),
+which is the project's GDPR point, demonstrated. Two tabs:
+
+- **Extract & Explain** — one receipt (upload an image, or pick a dataset one).
+  Choose the OCR engine + LLM, or the **OCR-free VLM**. Shows the image with OCR
+  boxes (coloured by confidence), the reading-order text, the raw model output,
+  the validated JSON, the failure tags and timings. With a label — a dataset
+  receipt, or values you type for your own upload — it adds a **per-field
+  comparison** and the stage that failed (OCR vs LLM). Without a label it still
+  flags **hallucinations** (values not present in the OCR text).
+- **Dataset Evaluation** — a built-in 50-receipt subset, or **your own labelled
+  dataset**. Upload a ZIP containing your images and a `labels.csv`:
+
+  ```text
+  images/            the receipt images
+  labels.csv         columns: id, image, company, date, address, total
+  ```
+
+  Any field may be blank (only filled fields are scored; `labels.jsonl` also
+  works). The app runs the whole pipeline, then shows accuracy with 95%
+  confidence intervals, the failure-taxonomy counts, and a per-receipt table you
+  can **filter by failure category** and drill into. Runs are slow on CPU
+  (~1–4 min per uncached receipt).
+
+The UI logic lives in `app/service.py`, kept free of Streamlit so it is
+unit-tested (`tests/test_app.py`); `app/app.py` only renders.
 
 ## Evaluation
 

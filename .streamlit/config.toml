@@ -1,0 +1,20 @@
+# UI configuration — security-minded defaults for a local, GDPR-compliant app.
+# Streamlit reads this when `streamlit run app/app.py` is started from the repo root.
+
+[server]
+# Bind to the loopback interface only: the UI is never exposed on the network.
+address = "localhost"
+headless = true
+# Cap uploads (receipt images / dataset ZIPs). MB.
+maxUploadSize = 50
+# Keep the secure defaults: reject cross-origin requests and require an XSRF token.
+enableCORS = true
+enableXsrfProtection = true
+
+[browser]
+# Do not send usage statistics to Streamlit — nothing about a run leaves the machine.
+gatherUsageStats = false
+
+[runner]
+# A slow CPU extraction must not be interrupted by a stale widget re-run.
+fastReruns = false
