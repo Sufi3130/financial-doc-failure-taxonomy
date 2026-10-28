@@ -1,0 +1,125 @@
+{
+ "SROIE": {
+  "paddleocr": {
+   "Phi-3": {
+    "by_category": {
+     "wrong_entity": 11,
+     "boundary_too_wide": 6,
+     "value_not_in_ocr": 33,
+     "wrong_value": 3,
+     "boundary_too_narrow": 4,
+     "wrong_total": 1,
+     "partial_value": 2,
+     "malformed_json": 8,
+     "wrong_date_format": 1,
+     "copy_corruption": 1
+    },
+    "total": 70
+   },
+   "Qwen2.5-3B": {
+    "by_category": {
+     "value_not_in_ocr": 33,
+     "boundary_too_wide": 5,
+     "wrong_total": 5,
+     "copy_corruption": 1,
+     "boundary_too_narrow": 1,
+     "partial_value": 1
+    },
+    "total": 46
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "wrong_total": 7,
+     "value_not_in_ocr": 32,
+     "boundary_too_narrow": 4,
+     "copy_corruption": 3,
+     "wrong_entity": 6
+    },
+    "total": 52
+   }
+  },
+  "tesseract": {
+   "Phi-3": {
+    "by_category": {
+     "wrong_entity": 3,
+     "value_not_in_ocr": 67,
+     "boundary_too_wide": 4,
+     "wrong_value": 1,
+     "copy_corruption": 1,
+     "wrong_total": 3,
+     "partial_value": 2,
+     "malformed_json": 8
+    },
+    "total": 89
+   },
+   "Qwen2.5-3B": {
+    "by_category": {
+     "value_not_in_ocr": 72,
+     "wrong_total": 4,
+     "copy_corruption": 1,
+     "boundary_too_wide": 1,
+     "boundary_too_narrow": 1,
+     "wrong_entity": 3
+    },
+    "total": 82
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "value_not_in_ocr": 70,
+     "wrong_total": 11,
+     "copy_corruption": 3,
+     "malformed_json": 4,
+     "wrong_entity": 7,
+     "boundary_too_wide": 1
+    },
+    "total": 96
+   }
+  }
+ },
+ "CORD": {
+  "paddleocr": {
+   "Phi-3": {
+    "by_category": {
+     "malformed_json": 1,
+     "wrong_total": 1
+    },
+    "total": 2
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "wrong_total": 10,
+     "value_not_in_ocr": 1
+    },
+    "total": 11
+   },
+   "Qwen2.5-3B": {
+    "by_category": {},
+    "total": 0
+   }
+  },
+  "tesseract": {
+   "Phi-3": {
+    "by_category": {
+     "wrong_total": 4,
+     "value_not_in_ocr": 32,
+     "malformed_json": 1
+    },
+    "total": 37
+   },
+   "Qwen2.5-3B": {
+    "by_category": {
+     "value_not_in_ocr": 33,
+     "wrong_total": 5
+    },
+    "total": 38
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "wrong_total": 11,
+     "value_not_in_ocr": 33
+    },
+    "total": 44
+   }
+  }
+ }
+}
