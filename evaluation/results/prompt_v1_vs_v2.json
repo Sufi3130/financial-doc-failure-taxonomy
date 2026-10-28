@@ -1,0 +1,233 @@
+{
+ "SROIE/phi3": {
+  "all_fields": {
+   "v1": 26.0,
+   "v2": 26.0
+  },
+  "fields": {
+   "company": {
+    "v1": 44.0,
+    "v2": 40.0
+   },
+   "date": {
+    "v1": 82.0,
+    "v2": 80.0
+   },
+   "address": {
+    "v1": 42.0,
+    "v2": 40.0
+   },
+   "total": {
+    "v1": 92.0,
+    "v2": 84.0
+   }
+  },
+  "categories": {
+   "wrong_entity": {
+    "v1": 11,
+    "v2": 9
+   },
+   "wrong_total": {
+    "v1": 1,
+    "v2": 2
+   },
+   "boundary_too_wide": {
+    "v1": 6,
+    "v2": 6
+   },
+   "boundary_too_narrow": {
+    "v1": 4,
+    "v2": 4
+   },
+   "partial_value": {
+    "v1": 2,
+    "v2": 2
+   },
+   "malformed_json": {
+    "v1": 8,
+    "v2": 20
+   }
+  },
+  "paired": {
+   "v1_wrong_to_v2_right": 1,
+   "v2_regressions": 1
+  },
+  "schema_valid_rate": {
+   "v1": 96.0,
+   "v2": 90.0
+  }
+ },
+ "SROIE/qwen2.5-3b": {
+  "all_fields": {
+   "v1": 44.0,
+   "v2": 38.0
+  },
+  "fields": {
+   "company": {
+    "v1": 60.0,
+    "v2": 60.0
+   },
+   "date": {
+    "v1": 94.0,
+    "v2": 94.0
+   },
+   "address": {
+    "v1": 66.0,
+    "v2": 60.0
+   },
+   "total": {
+    "v1": 88.0,
+    "v2": 92.0
+   }
+  },
+  "categories": {
+   "wrong_total": {
+    "v1": 5,
+    "v2": 3
+   },
+   "boundary_too_wide": {
+    "v1": 5,
+    "v2": 9
+   },
+   "boundary_too_narrow": {
+    "v1": 1,
+    "v2": 0
+   },
+   "partial_value": {
+    "v1": 1,
+    "v2": 0
+   }
+  },
+  "paired": {
+   "v1_wrong_to_v2_right": 0,
+   "v2_regressions": 3
+  },
+  "schema_valid_rate": {
+   "v1": 100.0,
+   "v2": 100.0
+  }
+ },
+ "SROIE/llama3.2-3b": {
+  "all_fields": {
+   "v1": 32.0,
+   "v2": 36.0
+  },
+  "fields": {
+   "company": {
+    "v1": 62.0,
+    "v2": 62.0
+   },
+   "date": {
+    "v1": 94.0,
+    "v2": 94.0
+   },
+   "address": {
+    "v1": 56.0,
+    "v2": 56.0
+   },
+   "total": {
+    "v1": 84.0,
+    "v2": 88.0
+   }
+  },
+  "categories": {
+   "wrong_entity": {
+    "v1": 6,
+    "v2": 8
+   },
+   "wrong_total": {
+    "v1": 7,
+    "v2": 5
+   },
+   "boundary_too_narrow": {
+    "v1": 4,
+    "v2": 2
+   }
+  },
+  "paired": {
+   "v1_wrong_to_v2_right": 3,
+   "v2_regressions": 1
+  },
+  "schema_valid_rate": {
+   "v1": 100.0,
+   "v2": 100.0
+  }
+ },
+ "CORD/phi3": {
+  "all_fields": {
+   "v1": 96.0,
+   "v2": 94.0
+  },
+  "fields": {
+   "total": {
+    "v1": 96.0,
+    "v2": 94.0
+   }
+  },
+  "categories": {
+   "wrong_total": {
+    "v1": 1,
+    "v2": 2
+   },
+   "malformed_json": {
+    "v1": 1,
+    "v2": 1
+   }
+  },
+  "paired": {
+   "v1_wrong_to_v2_right": 0,
+   "v2_regressions": 1
+  },
+  "schema_valid_rate": {
+   "v1": 98.0,
+   "v2": 98.0
+  }
+ },
+ "CORD/qwen2.5-3b": {
+  "all_fields": {
+   "v1": 100.0,
+   "v2": 100.0
+  },
+  "fields": {
+   "total": {
+    "v1": 100.0,
+    "v2": 100.0
+   }
+  },
+  "categories": {},
+  "paired": {
+   "v1_wrong_to_v2_right": 0,
+   "v2_regressions": 0
+  },
+  "schema_valid_rate": {
+   "v1": 100.0,
+   "v2": 100.0
+  }
+ },
+ "CORD/llama3.2-3b": {
+  "all_fields": {
+   "v1": 78.0,
+   "v2": 90.0
+  },
+  "fields": {
+   "total": {
+    "v1": 78.0,
+    "v2": 90.0
+   }
+  },
+  "categories": {
+   "wrong_total": {
+    "v1": 10,
+    "v2": 5
+   }
+  },
+  "paired": {
+   "v1_wrong_to_v2_right": 6,
+   "v2_regressions": 0
+  },
+  "schema_valid_rate": {
+   "v1": 100.0,
+   "v2": 100.0
+  }
+ }
+}
