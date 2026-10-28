@@ -402,10 +402,27 @@ python -m src.vlm --manifest evaluation/datasets/SROIE/subset_test_50.jsonl
 
 The VLM is **much slower on CPU** (~3–4 min/receipt; the vision encoder
 dominates), zero-shot, with images capped at 1280 px. Results are scored by
-the same `evaluate.py`. _Full results pending (overnight run)._ A known
-trade-off: the VLM is a **black box** — with no intermediate OCR text, a wrong
-field cannot be attributed to reading vs extraction, unlike the two-stage
-pipeline.
+the same `evaluate.py`. Both models emit valid JSON on every receipt, but the
+VLM wraps it in prose (100% schema-valid, 0% strict); the text model emits bare
+JSON (100% strict).
+
+**Controlled comparison** (normalised accuracy, 50 receipts each):
+
+| | SROIE all-4 | SROIE company | SROIE address | SROIE total | CORD total | median s/receipt |
+|---|---|---|---|---|---|---|
+| Qwen2.5-3B (OCR text) | 44% [31–58] | 60% | 66% | 88% | **100%** [93–100] | **102s** (SROIE) / **45s** (CORD) |
+| Qwen2.5-VL-3B (image) | **62%** [48–74] | **78%** | **82%** | **96%** | 94% [84–98] | 261s (SROIE) / 382s (CORD) |
+
+Reading the image directly **wins on messy receipts** (SROIE: +18 pts all-4,
+led by address +16 and company +18 — OCR flattens layout, the VLM still sees
+the header and multi-line address), but the **pipeline wins on clean receipts**
+(CORD: 100% vs 94% — PaddleOCR reads a crisp printed total perfectly; the VLM
+occasionally misreads a digit). The VLM costs 2.6×–8.5× more time on CPU.
+
+A known trade-off beyond accuracy: the VLM is a **black box** — with no
+intermediate OCR text, a wrong field cannot be attributed to reading vs
+extraction, unlike the two-stage pipeline. The failure taxonomy below is a
+pipeline-only advantage.
 
 **Where the misses come from** (Phi-3): OCR miss = the gold value is not in the OCR
 text at all; LLM miss = the value was in the OCR text but wasn't extracted

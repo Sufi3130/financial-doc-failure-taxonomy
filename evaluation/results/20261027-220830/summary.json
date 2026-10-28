@@ -1,0 +1,136 @@
+{
+ "run_id": "20261027-220830",
+ "manifest": "evaluation/datasets/SROIE/subset_test_50.jsonl",
+ "manifest_sha256": "48204e93a02fa8cee5fcc75134d29a8ad0d6fc1b619c06c35b39ea910265a040",
+ "n_receipts": 50,
+ "run": {
+  "started": "2026-10-27T22:08:30",
+  "finished": "2026-10-28T02:05:18",
+  "command": "python -m src.vlm --manifest evaluation/datasets/SROIE/subset_test_50.jsonl",
+  "git": {
+   "commit": "fcd05b31132435d17f2d6054b77568b172b5494b",
+   "uncommitted_changes": []
+  },
+  "prompt_version": null,
+  "shots": null,
+  "fewshot_seed": null,
+  "ocr_cache": null
+ },
+ "fewshot_ids": {},
+ "engines": {
+  "vlm": {
+   "receipts": 50,
+   "errors": 0,
+   "fields": {
+    "company": {
+     "scored": 50,
+     "strict_acc": 68.0,
+     "strict_acc_ci95": [
+      54.2,
+      79.2
+     ],
+     "normalized_acc": 78.0,
+     "normalized_acc_ci95": [
+      64.8,
+      87.2
+     ],
+     "in_ocr": 0.0,
+     "ocr_miss": 50,
+     "llm_miss_given_in_ocr": 0,
+     "mean_token_f1": 90.1
+    },
+    "date": {
+     "scored": 50,
+     "strict_acc": 84.0,
+     "strict_acc_ci95": [
+      71.5,
+      91.7
+     ],
+     "normalized_acc": 98.0,
+     "normalized_acc_ci95": [
+      89.5,
+      99.6
+     ],
+     "in_ocr": 0.0,
+     "ocr_miss": 50,
+     "llm_miss_given_in_ocr": 0
+    },
+    "address": {
+     "scored": 50,
+     "strict_acc": 40.0,
+     "strict_acc_ci95": [
+      27.6,
+      53.8
+     ],
+     "normalized_acc": 82.0,
+     "normalized_acc_ci95": [
+      69.2,
+      90.2
+     ],
+     "in_ocr": 0.0,
+     "ocr_miss": 50,
+     "llm_miss_given_in_ocr": 0,
+     "mean_token_f1": 95.2
+    },
+    "total": {
+     "scored": 50,
+     "strict_acc": 84.0,
+     "strict_acc_ci95": [
+      71.5,
+      91.7
+     ],
+     "normalized_acc": 96.0,
+     "normalized_acc_ci95": [
+      86.5,
+      98.9
+     ],
+     "in_ocr": 0.0,
+     "ocr_miss": 50,
+     "llm_miss_given_in_ocr": 0
+    }
+   },
+   "all_fields_normalized_acc": 62.0,
+   "all_fields_normalized_acc_ci95": [
+    48.2,
+    74.1
+   ],
+   "schema": {
+    "strict_valid_rate": 0.0,
+    "strict_valid_rate_ci95": [
+     0.0,
+     7.1
+    ],
+    "schema_valid_rate": 100.0,
+    "schema_valid_rate_ci95": [
+     92.9,
+     100.0
+    ],
+    "failure_counts": {}
+   },
+   "latency_s": {
+    "ocr_s": null,
+    "llm_s": {
+     "mean": 284.0,
+     "median": 261.1,
+     "p90": 456.3,
+     "min": 143.5,
+     "max": 479.3,
+     "n": 50
+    },
+    "llm_prompt_s": null,
+    "llm_gen_s": null,
+    "total_s": {
+     "mean": 284.0,
+     "median": 261.1,
+     "p90": 456.3,
+     "min": 143.5,
+     "max": 479.3,
+     "n": 50
+    },
+    "power": {
+     "ac": 50
+    }
+   }
+  }
+ }
+}

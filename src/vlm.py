@@ -190,7 +190,7 @@ def main():
     print(f"   failures: {s['failure_counts'] or '-'}")
     t = s["timings_s"].get("total_s")
     if t:
-        print(f"   time/receipt median/mean/p90: {t['median']}/{t['mean']}/{t['p90']}s")
+        print(f"   time/receipt median/mean: {t['median']}/{t['mean']}s")
     print(f"\nrun log: {_rel(run_jsonl)}")
     print(f"field accuracy: python evaluation/evaluate.py {_rel(run_dir)} --manifest {_rel(args.manifest)}")
 
