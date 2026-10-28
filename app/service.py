@@ -24,7 +24,7 @@ from src.extraction import (DEFAULT_MODEL_NAME, FIELDS, MODELS, PROMPT_VERSION, 
                             LLMSettings, LocalLLM, resolve_model)
 from src.extraction.fewshot import load_examples, pool_for  # noqa: E402
 from src.ocr import ENGINES, get_engine  # noqa: E402
-from src.ocr.runlog import RUNS_DIR  # noqa: E402
+from src.ocr.runlog import CACHE_DIR, RUNS_DIR  # noqa: E402
 
 import evaluation.evaluate as ev  # noqa: E402
 import evaluation.failure_taxonomy.tag as tagger  # noqa: E402
@@ -305,9 +305,35 @@ def builtin_manifests():
     return out
 
 
+def full_manifests():
+    """Name -> full manifest path (every prepared receipt, beyond the 50-subset).
+    SROIE's manifest also holds the train split; callers filter it out (train is the
+    few-shot pool). These are gitignored and generated, so present only after prepare."""
+    out = {}
+    for name, rel in (("SROIE (full set)", "SROIE/manifest.jsonl"),
+                      ("CORD (full set)", "CORD/manifest.jsonl")):
+        path = REPO_ROOT / "evaluation" / "datasets" / rel
+        if path.is_file():
+            out[name] = path
+    return out
+
+
 def load_manifest(path):
     with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
+
+
+def evaluatable_records(records):
+    """Records safe to run in the UI: drop the train split (the few-shot pool), so a
+    picked receipt is never one the prompt already contains as an example."""
+    return [r for r in records if r.get("split") != "train"]
+
+
+def ocr_cached(engine_name, record):
+    """True if this receipt's OCR for this engine is already cached (so a run is fast).
+    False means a fresh OCR pass, which is slow — used to warn on unseen receipts."""
+    rid = record.get("id") or Path(record["image"]).stem
+    return (CACHE_DIR / engine_name / f"{rid}.{engine_name}.json").is_file()
 
 
 def write_manifest(records, path):

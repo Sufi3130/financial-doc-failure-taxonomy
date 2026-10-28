@@ -43,6 +43,7 @@ MODEL_LABELS = {
     service.VLM_MODEL: "Qwen2.5-VL-3B (image)",
 }
 ALL_MODELS = service.TEXT_MODELS + [service.VLM_MODEL]
+_PROMPT_DESC = {"v1": "baseline", "v2": "disambiguation rules"}
 
 _CSS = """
 <style>
@@ -124,7 +125,7 @@ def image_path_of(record):
     return p if p.is_absolute() else REPO_ROOT / p
 
 
-def run_model(record, model_name, engine_name="paddleocr", shots=2):
+def run_model(record, model_name, engine_name="paddleocr", shots=2, prompt_version=service.DEFAULT_PROMPT):
     """Run one receipt with one model (text pipeline or VLM). Returns a run row."""
     if service.is_vlm_engine(model_name):
         vlm = get_vlm(model_name)
@@ -132,7 +133,7 @@ def run_model(record, model_name, engine_name="paddleocr", shots=2):
     engine = get_engine(engine_name)
     llm = get_llm(model_name)
     ids, examples = service.fewshot(engine, shots=shots)
-    return service.extract(record, engine, llm, examples, ids)
+    return service.extract(record, engine, llm, examples, ids, prompt_version=prompt_version)
 
 
 _STAGE_PCT = {"ocr": 0.55, "llm": 0.72, "parse": 0.95}
@@ -156,7 +157,8 @@ def _run_with_progress(record, choice, bar):
     ids, examples = service.fewshot(engine, shots=choice["shots"])
     row = service.extract(record, engine, llm, examples, ids,
                           on_stage=lambda s: bar.progress(_STAGE_PCT.get(s, 0.6),
-                                                          text=_STAGE_TXT.get(s, "Working…")))
+                                                          text=_STAGE_TXT.get(s, "Working…")),
+                          prompt_version=choice.get("prompt", service.DEFAULT_PROMPT))
     bar.progress(1.0, text="Done")
     return row
 
@@ -187,12 +189,18 @@ def pick_receipt(key, allow_upload=True, label_inputs=False):
                 cols = st.columns(2)
                 gold = {f: cols[i % 2].text_input(f, key=f"{key}_gold_{f}") for i, f in enumerate(FIELDS)}
         return service.make_record(tmp, locale=locale, gold=gold)
-    manifests = service.builtin_manifests()
+    scope = st.radio("Dataset scope", ["50-receipt subset", "Full dataset"],
+                     horizontal=True, key=f"{key}_scope")
+    manifests = service.builtin_manifests() if scope == "50-receipt subset" else service.full_manifests()
     if not manifests:
-        st.info("No dataset subsets found. Run the dataset prepare scripts first (see README).")
+        st.info("No dataset manifests found. Run the dataset prepare scripts first (see README).")
         return None
     name = st.selectbox("Dataset", list(manifests), key=f"{key}_ds")
     recs = service.load_manifest(manifests[name])
+    if scope == "Full dataset":
+        recs = service.evaluatable_records(recs)   # drop the train / few-shot split
+        st.caption(f"{len(recs)} receipts in the full set. Anything outside the 50-receipt subset "
+                   "has not been OCR'd yet, so the first run on it is slower.")
     rid = st.selectbox("Receipt", [r["id"] for r in recs], key=f"{key}_rid")
     return next(r for r in recs if r["id"] == rid)
 
@@ -322,9 +330,15 @@ def tab_extract():
         choice = {"vlm": True, "model": service.VLM_MODEL}
     else:
         engine = c2.selectbox("OCR engine", service.OCR_ENGINES)
+        prompt_v = c2.selectbox("Prompt", service.PROMPTS, key="ex_prompt",
+                                format_func=lambda v: f"{v} — {_PROMPT_DESC[v]}")
         model = c3.selectbox("LLM", service.TEXT_MODELS, format_func=lambda m: MODEL_LABELS.get(m, m))
         shots = c3.radio("Few-shot", [2, 0], format_func=lambda k: f"{k}-shot", horizontal=True)
-        choice = {"vlm": False, "engine": engine, "model": model, "shots": shots}
+        choice = {"vlm": False, "engine": engine, "model": model, "shots": shots, "prompt": prompt_v}
+
+    if record and not choice["vlm"] and not service.ocr_cached(choice["engine"], record):
+        st.info("🆕 This receipt has not been read before, so the OCR step will run fresh — "
+                "the first run on a new receipt is slower.")
 
     if record and st.button("Run extraction", type="primary", key="ex_run"):
         bar = st.progress(0.0, text="starting…")
@@ -353,7 +367,14 @@ def tab_compare():
     record = pick_receipt("cmp", allow_upload=True, label_inputs=True)
     chosen = st.multiselect("Models", ALL_MODELS, default=service.TEXT_MODELS,
                             format_func=lambda m: MODEL_LABELS.get(m, m))
-    engine = st.selectbox("OCR engine (for the text models)", service.OCR_ENGINES, key="cmp_engine")
+    c1, c2 = st.columns(2)
+    engine = c1.selectbox("OCR engine (for the text models)", service.OCR_ENGINES, key="cmp_engine")
+    prompt_v = c2.selectbox("Prompt (for the text models)", service.PROMPTS, key="cmp_prompt",
+                            format_func=lambda v: f"{v} — {_PROMPT_DESC[v]}")
+
+    if record and not service.ocr_cached(engine, record):
+        st.info("🆕 This receipt has not been read before, so the OCR step will run fresh — "
+                "slower the first time.")
 
     if record and chosen and st.button("Run comparison", type="primary", key="cmp_run"):
         rows = {}
@@ -362,7 +383,7 @@ def tab_compare():
             slow = " (VLM — slow)" if service.is_vlm_engine(model) else ""
             bar.progress((i - 1) / len(chosen), text=f"{MODEL_LABELS.get(model, model)}{slow}…")
             try:
-                rows[model] = run_model(record, model, engine)
+                rows[model] = run_model(record, model, engine, prompt_version=prompt_v)
             except Exception as exc:
                 st.error(f"{MODEL_LABELS.get(model, model)} failed: {type(exc).__name__}: {exc}")
         bar.progress(1.0, text="done")
