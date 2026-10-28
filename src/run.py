@@ -41,7 +41,7 @@ from pathlib import Path
 from src.extraction import (DEFAULT_MODEL_NAME, MODELS, LLMSettings, LocalLLM, build_messages, parse_output,
                             resolve_model, to_phi3)
 from src.extraction.fewshot import load_examples, pool_for
-from src.extraction.prompts import PROMPT_VERSION
+from src.extraction.prompts import PROMPT_VERSION, PROMPT_VERSIONS
 from src.ocr import ENGINES, cached_ocr, get_engine, new_run_dir
 from src.ocr.runlog import CACHE_DIR
 
@@ -130,7 +130,7 @@ def done_keys(run_jsonl):
 
 
 def process_receipt(record, engine, llm, examples, fewshot_ids, run_id, use_cache=True,
-                    cache_dir=CACHE_DIR, on_stage=None):
+                    cache_dir=CACHE_DIR, on_stage=None, prompt_version=PROMPT_VERSION):
     """Run one receipt through OCR -> LLM -> parse. Never raises: errors go into the row.
     on_stage(name): optional callback invoked with "ocr" / "llm" / "parse" as each begins
     (used by the UI to drive a progress bar)."""
@@ -162,7 +162,7 @@ def process_receipt(record, engine, llm, examples, fewshot_ids, run_id, use_cach
         stage = "llm"
         if on_stage:
             on_stage("llm")
-        gen = llm.generate(to_phi3(build_messages(reading.text, examples)))
+        gen = llm.generate(to_phi3(build_messages(reading.text, examples, prompt_version)))
         row["llm"] = gen.model_dump(mode="json")
         row["timings"].update(llm_s=gen.seconds, llm_prompt_s=gen.prompt_eval_s, llm_gen_s=gen.gen_s)
 
@@ -204,13 +204,14 @@ def summarize(rows):
 
 
 def run(records, engines, llm, run_dir, shots=2, seed=42, use_cache=True, cache_dir=CACHE_DIR,
-        fewshot_loader=load_examples, meta=None, log=print):
+        fewshot_loader=load_examples, meta=None, log=print, prompt_version=PROMPT_VERSION):
     """Process records with each OCREngine (engine-major order), appending to run.jsonl."""
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     run_jsonl, meta_path = run_dir / "run.jsonl", run_dir / "run_meta.json"
     meta = meta or {}
     meta.setdefault("run_id", run_dir.name)
+    meta.setdefault("prompt_version", prompt_version)
     meta.setdefault("engines", {})
     skip = done_keys(run_jsonl)
 
@@ -231,10 +232,10 @@ def run(records, engines, llm, run_dir, shots=2, seed=42, use_cache=True, cache_
         ids, examples = fewshot_loader(engine, k=shots, seed=seed)
 
         t0 = time.perf_counter()
-        warm = llm.generate(to_phi3(build_messages("", examples)), max_tokens=1)
+        warm = llm.generate(to_phi3(build_messages("", examples, prompt_version)), max_tokens=1)
         meta["engines"][engine.name] = {
             "settings": engine.settings(), "version": engine.version(), "fewshot_ids": ids,
-            "prompt_prefix_messages": to_phi3(build_messages("<RECEIPT>", examples)),
+            "prompt_prefix_messages": to_phi3(build_messages("<RECEIPT>", examples, prompt_version)),
             "warmup": {"seconds": round(time.perf_counter() - t0, 3),
                        "prompt_tokens": warm.prompt_tokens,
                        "prompt_tokens_evaluated": warm.prompt_tokens_evaluated},
@@ -245,7 +246,8 @@ def run(records, engines, llm, run_dir, shots=2, seed=42, use_cache=True, cache_
             f"warm-up {meta['engines'][engine.name]['warmup']['seconds']:.1f}s")
 
         for record in pending:
-            row = process_receipt(record, engine, llm, examples, ids, meta["run_id"], use_cache, cache_dir)
+            row = process_receipt(record, engine, llm, examples, ids, meta["run_id"], use_cache,
+                                  cache_dir, prompt_version=prompt_version)
             with open(run_jsonl, "a", encoding="utf-8", newline="\n") as f:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
             n_done += 1
@@ -282,6 +284,8 @@ def main():
     parser.add_argument("--engine", default="paddleocr", choices=[*ENGINES, "all"])
     parser.add_argument("--model", default=DEFAULT_MODEL_NAME,
                         help=f"LLM: a registry name {sorted(MODELS)} or a path to a .gguf file")
+    parser.add_argument("--prompt", default=PROMPT_VERSION, choices=list(PROMPT_VERSIONS),
+                        help="prompt version (v1 baseline; v2 adds disambiguation rules)")
     parser.add_argument("--shots", type=int, default=2,
                         help="few-shot examples from the train split of the manifest's dataset")
     parser.add_argument("--seed", type=int, default=42, help="few-shot selection seed")
@@ -306,7 +310,7 @@ def main():
         "manifest_sha256": _sha256(args.manifest) if args.manifest else None,
         "n_receipts": len(records),
         "model": args.model,
-        "prompt_version": PROMPT_VERSION, "shots": args.shots, "fewshot_seed": args.seed,
+        "prompt_version": args.prompt, "shots": args.shots, "fewshot_seed": args.seed,
         "fewshot_pool": _rel(pool), "ocr_cache": not args.no_cache,
         "git": _git_state(), "versions": _versions(),
         "machine": {"platform": platform.platform(), "processor": platform.processor(),
@@ -323,7 +327,7 @@ def main():
     keep_awake(True)
     try:
         run_jsonl, meta = run(records, engines, llm, run_dir, args.shots, args.seed,
-                              use_cache=not args.no_cache, meta=meta,
+                              use_cache=not args.no_cache, meta=meta, prompt_version=args.prompt,
                               fewshot_loader=functools.partial(load_examples, pool=pool))
     finally:
         keep_awake(False)
