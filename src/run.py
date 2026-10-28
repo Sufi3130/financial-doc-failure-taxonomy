@@ -130,8 +130,10 @@ def done_keys(run_jsonl):
 
 
 def process_receipt(record, engine, llm, examples, fewshot_ids, run_id, use_cache=True,
-                    cache_dir=CACHE_DIR):
-    """Run one receipt through OCR -> LLM -> parse. Never raises: errors go into the row."""
+                    cache_dir=CACHE_DIR, on_stage=None):
+    """Run one receipt through OCR -> LLM -> parse. Never raises: errors go into the row.
+    on_stage(name): optional callback invoked with "ocr" / "llm" / "parse" as each begins
+    (used by the UI to drive a progress bar)."""
     t_start = time.perf_counter()
     row = {
         "run_id": run_id, "receipt_id": record["id"], "split": record.get("split"),
@@ -143,6 +145,8 @@ def process_receipt(record, engine, llm, examples, fewshot_ids, run_id, use_cach
     try:
         if record["id"] in fewshot_ids:
             raise ValueError("receipt is one of the few-shot examples")
+        if on_stage:
+            on_stage("ocr")
         result, reading, _, hit = cached_ocr(engine, REPO_ROOT / record["image"], record["id"],
                                              cache_dir=cache_dir, force=not use_cache)
         row["ocr_cached"] = hit
@@ -156,11 +160,15 @@ def process_receipt(record, engine, llm, examples, fewshot_ids, run_id, use_cach
         row["timings"]["ocr_s"] = result.timings["ocr_s"]
 
         stage = "llm"
+        if on_stage:
+            on_stage("llm")
         gen = llm.generate(to_phi3(build_messages(reading.text, examples)))
         row["llm"] = gen.model_dump(mode="json")
         row["timings"].update(llm_s=gen.seconds, llm_prompt_s=gen.prompt_eval_s, llm_gen_s=gen.gen_s)
 
         stage = "parse"
+        if on_stage:
+            on_stage("parse")
         t0 = time.perf_counter()
         outcome = parse_output(gen.raw_output, gen.finish_reason)
         row["timings"]["parse_s"] = round(time.perf_counter() - t0, 4)

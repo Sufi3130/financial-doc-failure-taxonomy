@@ -123,6 +123,17 @@ def test_tags_classify_a_wrong_field():
     assert addr[0]["stage"] in {"ocr", "llm_extraction", "llm_output"}
 
 
+def test_explain_turns_categories_into_plain_language():
+    assert "OCR stage did not read" in service.explain({"primary": "value_not_in_ocr", "tags": []})
+    assert "blank or failed read" in service.explain(
+        {"primary": "value_not_in_ocr", "tags": ["ocr_empty_page"]})
+    assert "100 or 1000" in service.explain({"primary": "wrong_total", "subtype": "scale_error"})
+    assert "cash" in service.explain(
+        {"primary": "wrong_total", "subtype": "other_amount_on_receipt:cash"})
+    assert "different business" in service.explain({"primary": "wrong_entity", "subtype": None})
+    assert "not clean JSON" in service.explain({"primary": "malformed_json", "subtype": "derailment"})
+
+
 def test_score_and_tags_need_labels():
     rec = service.make_record("x.jpg")                          # no gold
     row = _row(pred={"company": "ACME", "date": None, "address": None, "total": None})

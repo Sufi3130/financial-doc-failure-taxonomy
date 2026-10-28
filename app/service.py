@@ -93,9 +93,11 @@ def fewshot(engine, shots=2, seed=42, pool=None):
 
 
 # ------------------------------------------------------------------ single extraction
-def extract(record, engine, llm, examples=(), fewshot_ids=(), run_id="ui"):
-    """One receipt through OCR -> LLM -> parse. Returns the same row a run logs."""
-    return pipeline.process_receipt(record, engine, llm, list(examples), set(fewshot_ids), run_id)
+def extract(record, engine, llm, examples=(), fewshot_ids=(), run_id="ui", on_stage=None):
+    """One receipt through OCR -> LLM -> parse. Returns the same row a run logs.
+    on_stage(name): optional callback ("ocr"/"llm"/"parse") for a progress bar."""
+    return pipeline.process_receipt(record, engine, llm, list(examples), set(fewshot_ids), run_id,
+                                    on_stage=on_stage)
 
 
 def extract_vlm(record, vlm, run_id="ui"):
@@ -116,6 +118,62 @@ def tags(record, row, run_id="ui"):
     if not has_labels(record):
         return []
     return tagger.tag_receipt(record, row, run_id, dataset_label(record))
+
+
+_WHY = {
+    "fewshot_copy": "The model copied this value from a few-shot example instead of reading it off this receipt.",
+    "copy_corruption": "OCR read the value correctly, but the model altered a few characters while copying it.",
+    "wrong_entity": "The model picked a different business name or address that is also printed on the receipt "
+                    "(for example the buyer instead of the seller, or a brand name instead of the legal name).",
+    "boundary_too_narrow": "The model captured only part of the value — e.g. a name printed over two lines, "
+                           "with one line dropped.",
+    "partial_value": "The model's value partly overlaps the correct one but is neither a clean subset nor superset.",
+    "empty_field": "The value was present in the OCR text, but the model returned nothing (null).",
+}
+
+
+def explain(instance):
+    """A plain-language reason for one wrong field, from its taxonomy category.
+    (Not meaningful for the OCR-free VLM, which has no OCR stage to attribute to.)"""
+    cat, sub = instance["primary"], instance.get("subtype")
+    tags_ = set(instance.get("tags") or [])
+    if cat == "value_not_in_ocr":
+        if "ocr_empty_page" in tags_:
+            return ("OCR read almost nothing from this receipt (a blank or failed read), so the value never "
+                    "reached the model — an OCR-stage failure.")
+        base = ("The OCR stage did not read this value, so it is not in the text at all — an OCR-stage failure. "
+                "Typical causes: faint, low-contrast or stylised print, a garbled or merged line, or a "
+                "mis-shaped character (e.g. O read as 0).")
+        return base + (" OCR confidence on the nearby text was low." if "ocr_confidence_low" in tags_ else "")
+    if cat == "malformed_json":
+        detail = {"derailment": "it started as JSON then drifted into unrelated text",
+                  "prose_instead_of_json": "it wrote a sentence instead of JSON (often after an empty OCR read)",
+                  "truncated": "it ran out of space before closing the JSON",
+                  "prompt_too_long": "the prompt was too long for the model's context window",
+                  "not_object": "it returned something other than a JSON object",
+                  "invalid_json": "the JSON could not be parsed"}.get(sub, "the output was not valid JSON")
+        return f"The model's output was not clean JSON: {detail}."
+    if cat == "wrong_date_format":
+        return {"unparseable": "The date is unparseable (not a valid date).",
+                "day_month_swap": "The day and month are swapped."}.get(sub, "The date is wrong.")
+    if cat == "wrong_total":
+        if sub == "scale_error":
+            return ("The amount is off by a factor of 100 or 1000 — the model mishandled the thousands or "
+                    "decimal separator.")
+        if sub and sub.startswith("other_amount_on_receipt"):
+            which = sub.split(":", 1)[1] if ":" in sub else "another amount"
+            return f"The model took a different amount printed on the receipt ({which}) instead of the final total."
+        if sub == "amount_not_in_ocr":
+            return "The amount the model gave is not printed on the receipt."
+        return "The total is wrong."
+    if cat == "boundary_too_wide":
+        return {"adjacent_text": "The model included extra text from a neighbouring line beyond the field.",
+                "hallucinated_extension": "The model added extra text that is not on the receipt."}.get(
+            sub, "The model included extra text beyond the field.")
+    if cat == "wrong_value":
+        return ("The model produced a different value that is not on the receipt." if sub == "not_in_ocr"
+                else "The model produced a different value.")
+    return _WHY.get(cat, "The model produced a wrong value.")
 
 
 # ------------------------------------------------------------------ OCR box overlay
@@ -264,20 +322,33 @@ def new_run_dir():
     return path
 
 
-def run_batch(records, engine_name, llm, run_dir, shots=2, seed=42, use_cache=True, log=print):
-    """Run the whole pipeline over `records` and write a standard run log.
-    Returns (run_jsonl, manifest_path). Reuses src.run.run (warm-up, resume, meta)."""
+def run_batch(records, engine_name, model_obj, run_dir, shots=2, seed=42, use_cache=True, log=print):
+    """Run `records` through the pipeline (or the OCR-free VLM) and write a standard run log.
+
+    `engine_name` is an OCR engine ("paddleocr"/"tesseract") with `model_obj` a
+    LocalLLM, or VLM_MODEL with `model_obj` a QwenVL. Returns (run_jsonl, manifest_path).
+    """
     import functools
 
     run_dir = Path(run_dir)
     manifest_path = write_manifest(records, run_dir / "manifest.jsonl")
+    if engine_name == VLM_MODEL:
+        from src import vlm as vlm_mod
+        meta = {"source": "ui", "run_id": run_dir.name, "mode": "end_to_end_vlm",
+                "manifest": str(manifest_path), "model": engine_name}
+        vlm_mod.run(records, model_obj, run_dir, meta, log=log)
+        return run_dir / "run.jsonl", manifest_path
     engines = [get_engine(engine_name)]
     pool = pool_for(str(manifest_path))
     run_jsonl, _ = pipeline.run(
-        records, engines, llm, run_dir, shots=shots, seed=seed, use_cache=use_cache,
+        records, engines, model_obj, run_dir, shots=shots, seed=seed, use_cache=use_cache,
         fewshot_loader=functools.partial(load_examples, pool=pool),
         meta={"source": "ui", "manifest": str(manifest_path)}, log=log)
     return run_jsonl, manifest_path
+
+
+def is_vlm_engine(name):
+    return name == VLM_MODEL
 
 
 def evaluate_run(run_dir, manifest_path):

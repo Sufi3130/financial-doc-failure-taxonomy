@@ -18,3 +18,11 @@ gatherUsageStats = false
 [runner]
 # A slow CPU extraction must not be interrupted by a stale widget re-run.
 fastReruns = false
+
+[theme]
+base = "dark"
+primaryColor = "#6366f1"
+backgroundColor = "#0b0e14"
+secondaryBackgroundColor = "#151a23"
+textColor = "#e6e8ee"
+font = "sans serif"
