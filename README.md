@@ -303,24 +303,31 @@ differences between configurations are not meaningful on their own.
 
 | Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 | OCR-free VLM ablation |
 |---|---|---|---|
-| Company | 44.0 [31–58] (36.0) | 44.0 [31–58] (38.0) | TBD |
-| Date | 82.0 [69–90] (70.0) | 70.0 [56–81] (46.0) | TBD |
-| Address | 42.0 [29–56] (6.0) | 34.0 [22–48] (8.0) | TBD |
-| Total | 92.0 [81–97] (76.0) | 74.0 [60–84] (60.0) | TBD |
-| **All 4 fields correct** | **26.0 [16–40]** | **18.0 [10–31]** | TBD |
-| Token F1 company / address | 62.4 / 68.4 | 70.6 / 77.6 | TBD |
-| Schema compliance (strict-valid) | 96.0 % [86–99] | 96.0 % [86–99] | TBD |
-| Latency / page, median / mean / p90 | 122 s / 150 s / 295 s | 51 s / 52 s / 66 s | TBD |
-| ↳ OCR, median / mean / p90 | 74 s / 104 s / 252 s | 1.0 s / 1.2 s / 2.0 s | TBD |
-| ↳ LLM, median / mean / p90 | 44 s / 47 s / 57 s | 50 s / 51 s / 64 s | TBD |
+| Company | 44.0 [31–58] (36.0) | 44.0 [31–58] (38.0) | 78.0 [65–87] (68.0) |
+| Date | 82.0 [69–90] (70.0) | 70.0 [56–81] (46.0) | 98.0 [90–100] (84.0) |
+| Address | 42.0 [29–56] (6.0) | 34.0 [22–48] (8.0) | 82.0 [69–90] (40.0) |
+| Total | 92.0 [81–97] (76.0) | 74.0 [60–84] (60.0) | 96.0 [86–99] (84.0) |
+| **All 4 fields correct** | **26.0 [16–40]** | **18.0 [10–31]** | **62.0 [48–74]** |
+| Token F1 company / address | 62.4 / 68.4 | 70.6 / 77.6 | 90.1 / 95.2 |
+| Schema compliance (strict-valid) | 96.0 % [86–99] | 96.0 % [86–99] | 0.0 % [0–7] † |
+| Latency / page, median / mean / p90 | 122 s / 150 s / 295 s | 51 s / 52 s / 66 s | 261 s / 284 s / 456 s |
+| ↳ OCR, median / mean / p90 | 74 s / 104 s / 252 s | 1.0 s / 1.2 s / 2.0 s | — (no OCR stage) |
+| ↳ LLM, median / mean / p90 | 44 s / 47 s / 57 s | 50 s / 51 s / 64 s | 261 s / 284 s / 456 s |
 
 **CORD v2 total**: normalised match % with 95 % CI (strict match % in brackets)
 
 | Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 ⚠️ | OCR-free VLM ablation |
 |---|---|---|---|
-| Total | 96.0 [86–99] (80.0) | 26.0 [16–40] (20.0) | TBD |
-| Schema compliance (strict-valid) | 98.0 % [90–100] | 94.0 % [84–98] | TBD |
-| Latency / page, median / mean / p90 | 51 s / 76 s / 185 s | 9 s / 11 s / 20 s | TBD |
+| Total | 96.0 [86–99] (80.0) | 26.0 [16–40] (20.0) | 94.0 [84–98] (88.0) |
+| Schema compliance (strict-valid) | 98.0 % [90–100] | 94.0 % [84–98] | 0.0 % [0–7] † |
+| Latency / page, median / mean / p90 | 51 s / 76 s / 185 s | 9 s / 11 s / 20 s | 382 s / 335 s / 517 s |
+
+The **OCR-free VLM** column is **Qwen2.5-VL-3B** reading the image (zero-shot);
+the two text columns are **Phi-3** (2-shot). For the clean, same-family
+controlled comparison — Qwen2.5-3B on OCR text vs Qwen2.5-VL-3B on the image —
+see [OCR-free VLM ablation](#ocr-free-vlm-ablation) below.
+† The VLM produces valid JSON on **100 %** of receipts but wraps it in prose, so
+*strict*-valid (bare JSON only) is 0 %; schema-valid is 100 %.
 
 **Dataset-matched few-shot examples matter.** An earlier CORD run
 (`20260930-092942`) used the **SROIE** few-shot examples (English/Malay
