@@ -20,10 +20,11 @@ if str(REPO_ROOT) not in sys.path:
 from PIL import Image, ImageDraw  # noqa: E402
 
 from src import run as pipeline  # noqa: E402
-from src.extraction import DEFAULT_MODEL_NAME, FIELDS, MODELS, LLMSettings, LocalLLM, resolve_model  # noqa: E402
+from src.extraction import (DEFAULT_MODEL_NAME, FIELDS, MODELS, PROMPT_VERSION, PROMPT_VERSIONS,  # noqa: E402
+                            LLMSettings, LocalLLM, resolve_model)
 from src.extraction.fewshot import load_examples, pool_for  # noqa: E402
 from src.ocr import ENGINES, get_engine  # noqa: E402
-from src.ocr.runlog import RUNS_DIR  # noqa: E402
+from src.ocr.runlog import CACHE_DIR, RUNS_DIR  # noqa: E402
 
 import evaluation.evaluate as ev  # noqa: E402
 import evaluation.failure_taxonomy.tag as tagger  # noqa: E402
@@ -32,6 +33,8 @@ from evaluation.normalize import normalize_date, normalize_total  # noqa: E402
 # ------------------------------------------------------------------ choices
 OCR_ENGINES = list(ENGINES)              # ["paddleocr", "tesseract"]
 TEXT_MODELS = list(MODELS)               # ["phi3", "qwen2.5-3b", "llama3.2-3b"]
+PROMPTS = list(PROMPT_VERSIONS)          # ["v1", "v2"] — v1 baseline, v2 adds disambiguation rules
+DEFAULT_PROMPT = PROMPT_VERSION          # "v1"
 VLM_MODEL = "qwen2.5-vl-3b"              # OCR-free, image in
 LOCALES = {"my": "Malaysian ringgit (SROIE)", "id": "Indonesian rupiah (CORD)"}
 ALLOWED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg"}
@@ -93,11 +96,13 @@ def fewshot(engine, shots=2, seed=42, pool=None):
 
 
 # ------------------------------------------------------------------ single extraction
-def extract(record, engine, llm, examples=(), fewshot_ids=(), run_id="ui", on_stage=None):
+def extract(record, engine, llm, examples=(), fewshot_ids=(), run_id="ui", on_stage=None,
+            prompt_version=DEFAULT_PROMPT):
     """One receipt through OCR -> LLM -> parse. Returns the same row a run logs.
-    on_stage(name): optional callback ("ocr"/"llm"/"parse") for a progress bar."""
+    on_stage(name): optional callback ("ocr"/"llm"/"parse") for a progress bar.
+    prompt_version selects the instruction set ("v1" baseline / "v2" disambiguation)."""
     return pipeline.process_receipt(record, engine, llm, list(examples), set(fewshot_ids), run_id,
-                                    on_stage=on_stage)
+                                    on_stage=on_stage, prompt_version=prompt_version)
 
 
 def extract_vlm(record, vlm, run_id="ui"):
@@ -300,9 +305,35 @@ def builtin_manifests():
     return out
 
 
+def full_manifests():
+    """Name -> full manifest path (every prepared receipt, beyond the 50-subset).
+    SROIE's manifest also holds the train split; callers filter it out (train is the
+    few-shot pool). These are gitignored and generated, so present only after prepare."""
+    out = {}
+    for name, rel in (("SROIE (full set)", "SROIE/manifest.jsonl"),
+                      ("CORD (full set)", "CORD/manifest.jsonl")):
+        path = REPO_ROOT / "evaluation" / "datasets" / rel
+        if path.is_file():
+            out[name] = path
+    return out
+
+
 def load_manifest(path):
     with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
+
+
+def evaluatable_records(records):
+    """Records safe to run in the UI: drop the train split (the few-shot pool), so a
+    picked receipt is never one the prompt already contains as an example."""
+    return [r for r in records if r.get("split") != "train"]
+
+
+def ocr_cached(engine_name, record):
+    """True if this receipt's OCR for this engine is already cached (so a run is fast).
+    False means a fresh OCR pass, which is slow — used to warn on unseen receipts."""
+    rid = record.get("id") or Path(record["image"]).stem
+    return (CACHE_DIR / engine_name / f"{rid}.{engine_name}.json").is_file()
 
 
 def write_manifest(records, path):
@@ -322,7 +353,8 @@ def new_run_dir():
     return path
 
 
-def run_batch(records, engine_name, model_obj, run_dir, shots=2, seed=42, use_cache=True, log=print):
+def run_batch(records, engine_name, model_obj, run_dir, shots=2, seed=42, use_cache=True, log=print,
+              prompt_version=DEFAULT_PROMPT):
     """Run `records` through the pipeline (or the OCR-free VLM) and write a standard run log.
 
     `engine_name` is an OCR engine ("paddleocr"/"tesseract") with `model_obj` a
@@ -342,7 +374,7 @@ def run_batch(records, engine_name, model_obj, run_dir, shots=2, seed=42, use_ca
     pool = pool_for(str(manifest_path))
     run_jsonl, _ = pipeline.run(
         records, engines, model_obj, run_dir, shots=shots, seed=seed, use_cache=use_cache,
-        fewshot_loader=functools.partial(load_examples, pool=pool),
+        prompt_version=prompt_version, fewshot_loader=functools.partial(load_examples, pool=pool),
         meta={"source": "ui", "manifest": str(manifest_path)}, log=log)
     return run_jsonl, manifest_path
 

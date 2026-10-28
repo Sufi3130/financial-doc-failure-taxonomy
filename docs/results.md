@@ -173,6 +173,37 @@ difference (e.g. a label typo) as an OCR miss; these counts were checked
 against the manual review in
 [`taxonomy_v1.md`](../evaluation/failure_taxonomy/taxonomy_v1.md).
 
+## Prompt and few-shot experiments (issue #24)
+
+Two controlled experiments on branch `exp/m3`, same OCR (PaddleOCR, cached),
+same models and 50-receipt subsets — only the prompt or the examples change.
+Full write-ups and numbers:
+[`prompt_v1_vs_v2.md`](../evaluation/results/prompt_v1_vs_v2.md) and
+[`fewshot_2_vs_0.md`](../evaluation/results/fewshot_2_vs_0.md); tools:
+`evaluation/compare_prompts.py`, `evaluation/compare_fewshot.py`.
+
+**Prompt v1 vs v2** (v2 adds disambiguation rules: seller not buyer, final
+total not cash, copy in full, null not prose) — a **model-dependent trade-off,
+not a uniform win**:
+
+| cell | all-fields v1 → v2 | note |
+|---|---|---|
+| CORD / Llama-3.2-3B | **78 → 90 (+12)** | `wrong_total` 10 → 5; the only shift clearly beyond the ±13-pt noise |
+| SROIE / Phi-3 | 26 → 26 | **`malformed_json` 8 → 20** — the longer prompt destabilises the derailment-prone model |
+| SROIE / Qwen2.5-3B | 44 → 38 | within noise (`boundary_too_wide` 5 → 9) |
+
+Because it helps a capable model on its targeted weakness but hurts a fragile
+one, **both prompts are kept with v1 as the default**.
+
+**Few-shot: 2-shot vs 0-shot** (same v1 prompt, examples removed) — **removing
+the examples is worse in all six cells** (−6 to −24 points), breaking more
+receipts than it fixes everywhere. `wrong_total` rises throughout (CORD/Qwen
+0 → 11, CORD/Phi-3 1 → 9): the examples were silently supplying the cash/total
+and full-value semantics. The feared few-shot *copying* failure never appears
+(`fewshot_copy` tag = 0 in both), so the examples are a pure gain. Combined
+takeaway: **for these small models, concrete worked examples are a stronger,
+safer lever than longer instructions.**
+
 ## Notes
 
 - The subsets are small (50 receipts): each receipt is 2 percentage points,

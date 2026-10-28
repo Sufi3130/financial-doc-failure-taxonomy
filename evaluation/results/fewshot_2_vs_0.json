@@ -1,0 +1,278 @@
+{
+ "SROIE/phi3": {
+  "all_fields": {
+   "2shot": 26.0,
+   "0shot": 18.0
+  },
+  "fields": {
+   "company": {
+    "2shot": 44.0,
+    "0shot": 44.0
+   },
+   "date": {
+    "2shot": 82.0,
+    "0shot": 90.0
+   },
+   "address": {
+    "2shot": 42.0,
+    "0shot": 28.0
+   },
+   "total": {
+    "2shot": 92.0,
+    "0shot": 88.0
+   }
+  },
+  "categories": {
+   "wrong_entity": {
+    "2shot": 11,
+    "0shot": 9
+   },
+   "wrong_total": {
+    "2shot": 1,
+    "0shot": 4
+   },
+   "boundary_too_wide": {
+    "2shot": 6,
+    "0shot": 4
+   },
+   "boundary_too_narrow": {
+    "2shot": 4,
+    "0shot": 15
+   },
+   "partial_value": {
+    "2shot": 2,
+    "0shot": 3
+   },
+   "malformed_json": {
+    "2shot": 8,
+    "0shot": 4
+   }
+  },
+  "fewshot_copy": {
+   "2shot": 0,
+   "0shot": 0
+  },
+  "paired": {
+   "twoshot_right_to_zeroshot_wrong": 5,
+   "zeroshot_fixed": 1
+  },
+  "schema_valid_rate": {
+   "2shot": 96.0,
+   "0shot": 98.0
+  }
+ },
+ "SROIE/qwen2.5-3b": {
+  "all_fields": {
+   "2shot": 44.0,
+   "0shot": 28.0
+  },
+  "fields": {
+   "company": {
+    "2shot": 60.0,
+    "0shot": 58.0
+   },
+   "date": {
+    "2shot": 94.0,
+    "0shot": 90.0
+   },
+   "address": {
+    "2shot": 66.0,
+    "0shot": 56.0
+   },
+   "total": {
+    "2shot": 88.0,
+    "0shot": 80.0
+   }
+  },
+  "categories": {
+   "wrong_entity": {
+    "2shot": 0,
+    "0shot": 3
+   },
+   "wrong_total": {
+    "2shot": 5,
+    "0shot": 9
+   },
+   "boundary_too_wide": {
+    "2shot": 5,
+    "0shot": 6
+   },
+   "boundary_too_narrow": {
+    "2shot": 1,
+    "0shot": 3
+   },
+   "partial_value": {
+    "2shot": 1,
+    "0shot": 1
+   }
+  },
+  "fewshot_copy": {
+   "2shot": 0,
+   "0shot": 0
+  },
+  "paired": {
+   "twoshot_right_to_zeroshot_wrong": 9,
+   "zeroshot_fixed": 1
+  },
+  "schema_valid_rate": {
+   "2shot": 100.0,
+   "0shot": 100.0
+  }
+ },
+ "SROIE/llama3.2-3b": {
+  "all_fields": {
+   "2shot": 32.0,
+   "0shot": 22.0
+  },
+  "fields": {
+   "company": {
+    "2shot": 62.0,
+    "0shot": 52.0
+   },
+   "date": {
+    "2shot": 94.0,
+    "0shot": 88.0
+   },
+   "address": {
+    "2shot": 56.0,
+    "0shot": 46.0
+   },
+   "total": {
+    "2shot": 84.0,
+    "0shot": 70.0
+   }
+  },
+  "categories": {
+   "wrong_entity": {
+    "2shot": 6,
+    "0shot": 5
+   },
+   "wrong_total": {
+    "2shot": 7,
+    "0shot": 13
+   },
+   "boundary_too_wide": {
+    "2shot": 0,
+    "0shot": 4
+   },
+   "boundary_too_narrow": {
+    "2shot": 4,
+    "0shot": 6
+   },
+   "malformed_json": {
+    "2shot": 0,
+    "0shot": 4
+   }
+  },
+  "fewshot_copy": {
+   "2shot": 0,
+   "0shot": 0
+  },
+  "paired": {
+   "twoshot_right_to_zeroshot_wrong": 7,
+   "zeroshot_fixed": 2
+  },
+  "schema_valid_rate": {
+   "2shot": 100.0,
+   "0shot": 98.0
+  }
+ },
+ "CORD/phi3": {
+  "all_fields": {
+   "2shot": 96.0,
+   "0shot": 82.0
+  },
+  "fields": {
+   "total": {
+    "2shot": 96.0,
+    "0shot": 82.0
+   }
+  },
+  "categories": {
+   "wrong_total": {
+    "2shot": 1,
+    "0shot": 9
+   },
+   "malformed_json": {
+    "2shot": 1,
+    "0shot": 0
+   }
+  },
+  "fewshot_copy": {
+   "2shot": 0,
+   "0shot": 0
+  },
+  "paired": {
+   "twoshot_right_to_zeroshot_wrong": 9,
+   "zeroshot_fixed": 2
+  },
+  "schema_valid_rate": {
+   "2shot": 98.0,
+   "0shot": 84.0
+  }
+ },
+ "CORD/qwen2.5-3b": {
+  "all_fields": {
+   "2shot": 100.0,
+   "0shot": 76.0
+  },
+  "fields": {
+   "total": {
+    "2shot": 100.0,
+    "0shot": 76.0
+   }
+  },
+  "categories": {
+   "wrong_total": {
+    "2shot": 0,
+    "0shot": 11
+   }
+  },
+  "fewshot_copy": {
+   "2shot": 0,
+   "0shot": 0
+  },
+  "paired": {
+   "twoshot_right_to_zeroshot_wrong": 12,
+   "zeroshot_fixed": 0
+  },
+  "schema_valid_rate": {
+   "2shot": 100.0,
+   "0shot": 100.0
+  }
+ },
+ "CORD/llama3.2-3b": {
+  "all_fields": {
+   "2shot": 78.0,
+   "0shot": 72.0
+  },
+  "fields": {
+   "total": {
+    "2shot": 78.0,
+    "0shot": 72.0
+   }
+  },
+  "categories": {
+   "wrong_total": {
+    "2shot": 10,
+    "0shot": 11
+   },
+   "malformed_json": {
+    "2shot": 0,
+    "0shot": 1
+   }
+  },
+  "fewshot_copy": {
+   "2shot": 0,
+   "0shot": 0
+  },
+  "paired": {
+   "twoshot_right_to_zeroshot_wrong": 5,
+   "zeroshot_fixed": 2
+  },
+  "schema_valid_rate": {
+   "2shot": 100.0,
+   "0shot": 98.0
+  }
+ }
+}

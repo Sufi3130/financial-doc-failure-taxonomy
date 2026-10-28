@@ -58,3 +58,18 @@ def test_read_label_rows_csv_and_jsonl():
 def test_fewshot_zero_shot_is_empty():
     ids, examples = service.fewshot("paddleocr", shots=0)
     assert ids == [] and examples == []
+
+
+def test_evaluatable_records_drops_train_split():
+    recs = [{"id": "a", "split": "train"}, {"id": "b", "split": "test"},
+            {"id": "c", "split": "validation"}]
+    assert [r["id"] for r in service.evaluatable_records(recs)] == ["b", "c"]
+
+
+def test_ocr_cached_false_for_unknown_receipt():
+    assert service.ocr_cached("paddleocr", {"id": "not-cached-xyz", "image": "/x/y.png"}) is False
+
+
+def test_full_manifests_are_real_files_when_present():
+    for path in service.full_manifests().values():
+        assert Path(path).is_file()

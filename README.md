@@ -105,8 +105,10 @@ How to run each stage: **[docs/usage.md](docs/usage.md)**.
   results, tests + CI, [architecture docs](docs/architecture.md).
 - **M3** (in progress) — done: failure taxonomy v0 and **v1** (cross-model,
   50-case manual review), the three-model comparison, the OCR-free VLM
-  ablation, and the Streamlit UI. Remaining: testing documentation and the
-  thesis chapter drafts.
+  ablation, the Streamlit UI, testing documentation, and the **prompt and
+  few-shot experiments** (issue #24 — v1 vs v2, 2-shot vs 0-shot; both prompts
+  kept with v1 as default, see [docs/results.md](docs/results.md)). Remaining:
+  result charts and the thesis chapter drafts.
 
 Details: [docs/milestones.md](docs/milestones.md) and the repo's
 Issues / Milestones tabs.
