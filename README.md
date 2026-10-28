@@ -1,539 +1,112 @@
-# Failure Modes of Small Quantized LLMs in Financial Document Information Extraction: A Local, GDPR-Compliant Pipeline
+# Failure Modes of Small Quantized LLMs in Financial Document Information Extraction
 
-BSc Thesis, ELTE Faculty of Informatics — Final Examination January 2027
-Supervisor: Arafat
+**A local, GDPR-compliant pipeline for structured extraction from receipts — and a failure taxonomy of where small models break.**
+
+BSc Thesis · ELTE Faculty of Informatics · Final examination January 2027 · Supervisor: Md. Easin Arafat
+
+---
 
 ## Overview
 
-A fully local, GPU-free pipeline for extracting structured data (JSON) from
-financial documents (invoices, bank statements, payslips), using OCR engines
-(PaddleOCR, Tesseract) feeding a small quantized LLM (Phi-3 Mini / Mistral 7B GGUF).
-Benchmarked against a compact OCR-free vision-language model (PaddleOCR-VL) as
-an ablation. The primary contribution is a structured failure taxonomy for
-financial document extraction using small local models.
+A fully local, GPU-free pipeline that extracts structured JSON
+(`company`, `date`, `address`, `total`) from receipt images: an **OCR engine**
+(PaddleOCR or Tesseract) feeds a **small quantized LLM** (Phi-3 Mini,
+Qwen2.5-3B, or Llama-3.2-3B — Q4 GGUF, on CPU), which returns validated JSON.
+A compact **OCR-free vision-language model** (Qwen2.5-VL-3B) that reads the
+image end-to-end is included as an ablation.
+
+Everything runs on a laptop CPU, and nothing leaves the machine — the GDPR
+angle, demonstrated in the UI. The **main contribution is a quantified failure
+taxonomy**: every wrong field is attributed to the first stage that failed
+(OCR vs the model) and a finer cause, across the full grid of 3 models × 2 OCR
+engines × 2 datasets (SROIE, CORD).
+
+## Key results at a glance
+
+Three small models, same prompt and data, OCR fixed to PaddleOCR
+(normalised accuracy; full tables in **[docs/results.md](docs/results.md)**):
+
+| Model | SROIE all-4 fields | CORD total | Valid JSON | LLM s/page |
+|---|---|---|---|---|
+| Phi-3 Mini (3.8B) | 26% | 96% | 96% | 44 s |
+| **Qwen2.5-3B** | **44%** | **100%** | 100% | 25 s |
+| Llama-3.2-3B (3B) | 32% | 78% | 100% | 23 s |
+
+**Headline finding:** the smallest model, **Qwen2.5-3B, is the most accurate
+and ~2× faster — model family matters more than size** at this scale. (Two
+more: JSON *derailment* is a Phi-3-specific failure mode, and reading the image
+directly with the VLM beats OCR on messy receipts but loses on clean ones. See
+[docs/results.md](docs/results.md).)
+
+## Quick start
+
+Laptop CPU, no GPU. Developed on Windows 11 / Python 3.12; Linux and macOS
+steps are in the setup guide.
+
+```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+# download Phi-3 Q4 GGUF into models/ — see docs/setup.md
+python scripts/check_env.py                          # verifies the full stack
+
+python -m src.run evaluation/datasets/SROIE/raw/test/X00016469670.jpg   # one receipt
+streamlit run app/app.py                             # or the interactive UI
+```
+
+Full install for **Windows, Linux and macOS**, model downloads and the test
+setup: **[docs/setup.md](docs/setup.md)**.
+
+## How it works
+
+Two stages with a clear seam between them, so failures can be attributed:
+
+1. **OCR** turns the image into reading-order text, keeping per-piece boxes and
+   confidences and a map from each text row back to its pixels.
+2. **The LLM** reads that text (2-shot prompt) and returns validated JSON; a
+   lenient parser records every format problem.
+
+The seam is the point: because the OCR text is kept, a wrong field can be
+traced to the OCR stage or the model — which is what the failure taxonomy does.
+The OCR-free VLM collapses both stages into one and trades that
+interpretability for accuracy on messy images.
+
+Design, data flow, formats and decisions: **[docs/architecture.md](docs/architecture.md)**.
+How to run each stage: **[docs/usage.md](docs/usage.md)**.
 
 ## Repo structure
 
-- `docs/`: [architecture.md](docs/architecture.md) (components, data flow,
-  formats, design decisions), the proposal design diagram, literature notes,
-  milestone tracking
 - `src/ocr/` — OCR engines (PaddleOCR, Tesseract) behind one interface, reading-order text, run logs
 - `src/extraction/` — LLM prompt templates, JSON schema, extraction logic
 - `src/vlm.py` — OCR-free VLM ablation (image → JSON, end-to-end)
-- `evaluation/` — dataset prep, metrics, failure taxonomy annotations
+- `src/run.py` — the pipeline command (single receipt or batch)
+- `evaluation/` — dataset prep, metrics, and the **failure taxonomy**
 - `app/` — Streamlit UI (`app.py` renders; `service.py` holds the testable logic)
-- `tests/` — unit/integration tests
-
-## Setup
-
-The core stack runs on a laptop CPU with no GPU. Tested on Windows 11 with
-Python 3.12.6.
-
-```bash
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-pip install -r requirements-later.txt   # optional: scikit-learn, Streamlit (M3+)
-```
-
-### Windows setup notes
-
-- **Use the python.org CPython build** (3.12 recommended). MSYS2/MinGW or
-  Cygwin Pythons are not supported: `paddlepaddle` and `llama-cpp-python` do
-  not publish wheels for them.
-- **llama-cpp-python without a compiler:** `requirements.txt` points pip at the
-  prebuilt CPU wheel index
-  (`--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu`), so
-  a `win_amd64` wheel is installed and nothing is compiled. If pip falls back
-  to building from source (e.g. you changed the pinned version and no wheel
-  exists for it), install *Visual Studio Build Tools* with the "Desktop
-  development with C++" workload plus CMake, then reinstall.
-- **paddlepaddle** is the CPU build from PyPI. Do not install `paddlepaddle-gpu`.
-- **PaddleOCR on Windows CPU:** the pipeline creates PaddleOCR with
-  `enable_mkldnn=False`, which avoids a oneDNN crash in Paddle 3.x on Windows.
-- PowerShell may block `Activate.ps1`. Fix it with
-  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
-- On first run, PaddleOCR downloads its detection and recognition models to
-  `~/.paddlex/` (needs internet once).
-- **Tesseract** is a separate program, not a pip package (`pytesseract` only
-  calls it). Install Tesseract 5 (UB Mannheim build, includes English):
-  `winget install --id UB-Mannheim.TesseractOCR -e` (tested: 5.4.0). The
-  installer does not add it to PATH. The code finds it in
-  `C:\Program Files\Tesseract-OCR\` automatically, or set `TESSERACT_CMD` to
-  the full path of `tesseract.exe`. On Linux: `apt install tesseract-ocr`.
-
-### Download the model
-
-Phi-3-mini-4k-instruct, Q4 GGUF (~2.2 GB), into the gitignored `models/` folder:
-
-```bash
-mkdir models
-curl -L -o models/Phi-3-mini-4k-instruct-q4.gguf \
-  https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf
-```
-
-### Check the environment
-
-```bash
-python scripts/check_env.py
-```
-
-The script imports all core libraries, OCRs one SROIE receipt with both OCR
-engines, runs one short generation with the GGUF model and prints timings. It ends with
-`[OK] environment check passed`. Datasets go under
-`evaluation/datasets/<name>/raw/` (see
-[evaluation/datasets/README.md](evaluation/datasets/README.md)). Raw data and
-model files are gitignored.
-
-### Run the tests
-
-```bash
-python -m pytest tests -q                  # full environment
-pip install -r requirements-test.txt       # or: minimal environment for tests only
-```
-
-The tests need **no PaddleOCR, llama-cpp, Tesseract, dataset or model files**.
-The minimal environment is just pytest, pydantic, pillow, pyarrow and numpy,
-and the suite runs in a few seconds.
-
-- **Fixtures:** tiny synthetic fixtures in `tests/fixtures/` stand in for the
-  data. They're generated by `tests/fixtures/make_fixtures.py` and reproduce
-  real quirks: Windows numbered copies, missing and empty labels, duplicate
-  images with conflicting labels, rupiah totals, derailed and prose LLM
-  outputs.
-- **Stand-ins:** OCR engines and the LLM are replaced by stand-ins.
-- **Import check:** a test checks that importing the project never loads the
-  OCR or LLM libraries.
-- **CI:** GitHub Actions (`.github/workflows/tests.yml`) runs the suite on
-  Ubuntu and Windows for every push to `main` and every pull request.
-
-## OCR stage
-
-`src/ocr/` gives every OCR engine the same interface:
-`engine.recognize(image_path)` returns an `OCRResult`. It contains one
-`OCRLine` per text piece, with `text`, `box` (x1, y1, x2, y2), `polygon`,
-`confidence` (0–1 for both engines) and, for Tesseract, word-level detail.
-It also records the timings (`load_s`, `ocr_s`) and the engine settings.
-
-| Engine | Name | Notes |
-|---|---|---|
-| PaddleOCR 3.7 (PP-OCRv6 det + rec) | `paddleocr` | CPU, `text_rec_score_thresh=0` so no line is dropped for low confidence |
-| Tesseract 5.4 (LSTM) | `tesseract` | `--oem 1 --psm 4` (single column of variable-size text), grayscale input only (no scaling or binarisation) |
-
-```bash
-python -m src.ocr evaluation/datasets/SROIE/raw/test/X00016469670.jpg              # both engines
-python -m src.ocr evaluation/datasets/SROIE/raw/test/X00016469670.jpg --engine tesseract
-```
-
-```python
-from src.ocr import get_engine, reading_order
-result = get_engine("paddleocr").recognize(path)
-prompt_text = reading_order(result.lines).text
-```
-
-- **Reading order** (`src/ocr/layout.py`): engines often split one receipt
-  row into pieces (`TOTAL:` and `193.00`). `reading_order` groups pieces that
-  overlap vertically into rows, sorts each row left to right and joins them
-  with a space. Its `rows` field maps each prompt line back to the OCR pieces
-  it came from, so a wrong extraction can be traced to either the OCR or the
-  LLM.
-- **Run log** (`src/ocr/runlog.py`): `save_run_log` writes the full result
-  (all pieces, boxes, confidences, reading-order text and row map, timings,
-  settings, versions) to `runs/ocr/<timestamp>/<receipt>.<engine>.json`
-  (gitignored).
-- **Adding an engine:** subclass `OCREngine` (`src/ocr/base.py`), implement
-  `_load`, `_predict`, `version` and `settings`, report confidence in 0–1 and
-  pixel boxes on the original image, then register it in `ENGINES` in
-  `src/ocr/__init__.py`.
-- **OCR cache:** `cached_ocr()` saves each receipt's run log under
-  `runs/cache/ocr/<engine>/` and reuses it while the engine settings are
-  unchanged. Delete `runs/cache/` after upgrading an engine.
-
-## Extraction stage
-
-`src/extraction/` turns reading-order OCR text into a validated `Receipt`
-(`company`, `date`, `address`, `total`: each a string or `null`) with a small
-quantized LLM via llama-cpp-python. It runs on CPU with `temperature=0`, a
-fixed seed, `n_ctx=4096` and `max_tokens=256`.
-
-It is run through the pipeline command below.
-
-- **Models compared** (`--model`, registry in `llm.py`): the same prompt is
-  run across several small Q4 GGUF models to study failure modes per model.
-  - `phi3`: Phi-3-mini-4k-instruct, 3.8B (Microsoft, MIT) — the default.
-  - `qwen2.5-3b`: Qwen2.5-3B-Instruct (Alibaba, Apache 2.0, multilingual).
-  - `llama3.2-3b`: Llama-3.2-3B-Instruct (Meta, Llama 3.2 licence).
-
-  `--model` takes a registry name or a path to a `.gguf`. Each run records
-  the model in `run_meta.json`. Download the GGUFs into `models/` (gitignored).
-- **Prompt** (`prompts.py`, version recorded in every log): instructions plus
-  few-shot examples, then the target receipt. The instructions are sent as
-  part of the first user turn, not a `system` message (Phi-3's GGUF chat
-  template drops `system` messages; folding into the user turn works for every
-  model, keeping the prompt identical across models for a fair comparison).
-- **Few-shot examples** (`fewshot.py`): 2 by default (`--shots 0` for
-  zero-shot), picked with a seed from the **train split of the dataset being
-  evaluated**:
-  - **SROIE:** SROIE train. Excluded: train receipts with label issues,
-    duplicates, and the 7 byte-identical to a test receipt.
-  - **CORD:** a pool of 20 CORD train receipts written by `CORD/prepare.py`
-    (`fewshot_pool_ids.txt`). Their answers have `null` company/date/address,
-    because CORD doesn't annotate them.
-
-  The pool is chosen from the manifest's dataset folder; `--fewshot-pool`
-  overrides it. The same receipts are used for every OCR engine. Their OCR
-  text comes from the same engine as the target, and their answers are the
-  raw ground-truth strings.
-- **No constrained decoding:** the model is free to produce invalid output,
-  because output-format failures are part of what is measured.
-- **Parsing** (`parse.py`): lenient. It strips code fences and surrounding
-  text, then fixes trailing commas and Python-style quotes, and records each
-  repair. The result is validated against the strict schema. Every problem is
-  recorded as a failure: `prompt_too_long`, `truncated`, `no_json`,
-  `invalid_json`, `not_object`, `missing_field`, `null_field`, `wrong_type`,
-  `extra_field`.
-  - `schema_valid`: the parsed object fits the schema.
-  - `strict_valid`: it also needed no repairs and wasn't cut off.
-  - `lenient`: the best usable values for scoring (numbers turned into
-    strings, extra keys dropped).
-
-## Pipeline: one command, single receipt or batch
-
-`src/run.py` runs image → OCR → LLM → validated JSON:
-
-```bash
-python -m src.run evaluation/datasets/SROIE/raw/test/X00016469670.jpg            # one receipt
-python -m src.run --manifest evaluation/datasets/SROIE/subset_test_50.jsonl --engine all
-python -m src.run --manifest ... --resume runs/pipeline/<run>                   # continue a run
-```
-
-Options: `--engine paddleocr|tesseract|all` (default `paddleocr`),
-`--shots N` (default 2), `--seed`, `--limit N`, `--no-cache`.
-
-- **Run log:** `runs/pipeline/<timestamp>/run.jsonl` (gitignored). Each
-  receipt is appended as one line as soon as it finishes, so an interrupted
-  run loses nothing. A line holds:
-  - `receipt_id`, `split`, `engine`, `image`
-  - `ocr`: reading-order text, row map and all pieces with boxes and confidences
-  - `llm`: raw output, `finish_reason`, token counts
-  - `outcome`: repairs, failures, `schema_valid` / `strict_valid`, lenient values
-  - `timings` and `error`
-
-  Ground truth is not copied; the evaluator joins on `receipt_id`.
-- **`run_meta.json`** next to it holds:
-  - the command, git commit and uncommitted files
-  - library versions, CPU, model file and settings
-  - prompt version, few-shot IDs and the exact prompt prefix for each engine
-  - OCR settings, the warm-up and a summary (validity counts, failure and repair
-    counts, mean/median timings)
-- **Timings per page (CPU):** `ocr_s`, `llm_s` (split into `llm_prompt_s`
-  and `llm_gen_s` from llama.cpp's counters), `parse_s`, `total_s` =
-  OCR + LLM + parse, and `wall_s`.
-  - The model is loaded once. Before each engine's receipts, a warm-up call
-    reads the fixed prompt prefix (instructions + few-shot examples), so every
-    page is timed warm. `llm.prompt_tokens_evaluated` shows how many prompt
-    tokens were actually read.
-  - With the OCR cache (default), a cached receipt's `ocr_s` is the time
-    measured when its OCR really ran (`ocr_cached: true`).
-  - **Measure on AC power.** Laptops throttle the CPU on battery. Each line
-    records `power` (`ac` / `battery`), and the command warns when it starts
-    on battery. While a run is in progress the command stops Windows from
-    sleeping on idle (`SetThreadExecutionState`). Closing the lid still
-    suspends the laptop.
-- **Batch behaviour:**
-  - Engines run one after another (all receipts per engine) so the prompt
-    prefix stays reusable.
-  - An error on one receipt is logged (`stage`, `type`, `message`) and the
-    batch continues.
-  - `--resume` skips receipts already logged without an error, and retries
-    failed ones by appending a new line. Use the last line per
-    engine + receipt.
-
-## Run the UI
-
-A local Streamlit app wraps the same pipeline for interactive use. Streamlit is
-in `requirements.txt`, so after the setup above just run (from the repo root):
-
-```bash
-streamlit run app/app.py          # opens http://localhost:8501
-```
-
-It runs **entirely on this machine** — no image or label leaves it. The server
-binds to `localhost`, keeps CORS/XSRF protection on and Streamlit's telemetry off
-(`.streamlit/config.toml`); uploads are processed in a temporary folder. This is
-the project's GDPR point, demonstrated. A left sidebar navigates three tools plus
-a home page (the current page is in the URL, so refresh and Back/Forward work):
-
-- **Extract & Explain** — one receipt (upload an image, or pick a dataset one).
-  Choose the OCR engine + LLM, or the **OCR-free VLM**. A staged progress bar
-  shows each phase (load → OCR → model → parse). Shows the image with OCR boxes
-  (coloured by confidence), the reading-order text, the raw model output, the
-  validated JSON, the timings, and — with a label (a dataset receipt, or values
-  you type for an upload) — a **per-field comparison**, the stage that failed
-  (OCR vs LLM), and a plain-language **reason for each wrong field**. Without a
-  label it flags **hallucinations** (values not present in the OCR text).
-- **Compare models** — run any mix of **Phi-3 / Qwen2.5-3B / Llama-3.2-3B / the
-  OCR-free VLM** on one receipt, side by side: each model's four fields,
-  correct/wrong (with a label), JSON validity, failure categories and timing.
-- **Dataset Evaluation** — a single image, a built-in 50-receipt subset, or
-  **your own labelled dataset**. For an upload, drop a ZIP of images plus a
-  `labels.csv`:
-
-  ```text
-  images/            the receipt images
-  labels.csv         columns: id, image, company, date, address, total
-  ```
-
-  Any field may be blank (only filled fields are scored; `labels.jsonl` also
-  works). The engine list includes the **OCR-free VLM**. The app runs the whole
-  pipeline, then shows accuracy with 95% confidence intervals, the
-  failure-taxonomy counts, and a per-receipt table you can **filter by failure
-  category** and drill into. Runs are slow on CPU (~1–4 min per uncached receipt;
-  the VLM ~3–4 min).
-
-The UI logic lives in `app/service.py`, kept free of Streamlit so it is
-unit-tested (`tests/test_app.py`); `app/app.py` only renders.
-
-## Evaluation
-
-```bash
-python evaluation/evaluate.py runs/pipeline/<run> --manifest evaluation/datasets/SROIE/subset_test_50.jsonl
-```
-
-`evaluation/evaluate.py` scores a run log against a manifest. It uses the
-last row per engine and receipt, and **every receipt in the manifest counts**:
-a failed, empty or missing output counts as wrong. Only annotated fields are
-scored (CORD: `total` only).
-
-- **Strict match:** the prediction equals the label exactly (after trimming).
-- **Normalised match:**
-  - date and total go through `evaluation/normalize.py`, using the record's
-    locale;
-  - company and address ignore case, spaces and punctuation.
-- **Token F1** (company, address): partial credit for boundary errors.
-- **Value in OCR text:** splits misses into OCR misses (the value was never
-  read) and LLM misses (it was read but not extracted correctly).
-- **Schema compliance:** `strict_valid` = clean JSON that fits the schema
-  with no repairs; `schema_valid` = fits the schema after lenient repairs.
-- **Latency:** seconds per page, median and mean.
-
-Results go to `evaluation/results/<run_id>/`:
-
-- `summary.json`: all metrics
-- `per_receipt.csv`: match flags, failure types and timings per receipt (no
-  text)
-- `per_receipt_detail.jsonl`: the same plus predicted and ground-truth text.
-  This one is gitignored because it contains labels.
-
-## Key Results
-
-**Setup:**
-
-- Phi-3-mini-4k-instruct Q4 GGUF (llama-cpp-python, CPU), prompt `v1`,
-  2-shot (SROIE train `X51005676545`, `X51005361946`; few-shot seed 42),
-  temperature 0.
-- **SROIE:** 50-receipt test subset `subset_test_50` (seed 42), run
-  `20260930-063807`.
-- **CORD v2:** 50-receipt validation + test subset `subset_valtest_50`
-  (seed 42), run `20261027-183737`, with **CORD** few-shot examples (CORD
-  train pool, seed 42). Only `total` is scored, normalised as rupiah.
-- Intel 4-core/8-thread laptop CPU on AC power, fresh OCR (no cache), both
-  runs from clean commits (SROIE `2e9c77a`, CORD `0684d6c`).
-
-All percentages are over the 50 receipts. **[a–b] is the 95 % confidence
-interval** (Wilson). With n = 50, intervals are about ±10–14 points, so small
-differences between configurations are not meaningful on their own.
-
-**SROIE Task 3**: normalised match % with 95 % CI (strict match % in brackets)
-
-| Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 | OCR-free VLM ablation |
-|---|---|---|---|
-| Company | 44.0 [31–58] (36.0) | 44.0 [31–58] (38.0) | 78.0 [65–87] (68.0) |
-| Date | 82.0 [69–90] (70.0) | 70.0 [56–81] (46.0) | 98.0 [90–100] (84.0) |
-| Address | 42.0 [29–56] (6.0) | 34.0 [22–48] (8.0) | 82.0 [69–90] (40.0) |
-| Total | 92.0 [81–97] (76.0) | 74.0 [60–84] (60.0) | 96.0 [86–99] (84.0) |
-| **All 4 fields correct** | **26.0 [16–40]** | **18.0 [10–31]** | **62.0 [48–74]** |
-| Token F1 company / address | 62.4 / 68.4 | 70.6 / 77.6 | 90.1 / 95.2 |
-| Schema compliance (strict-valid) | 96.0 % [86–99] | 96.0 % [86–99] | 0.0 % [0–7] † |
-| Latency / page, median / mean / p90 | 122 s / 150 s / 295 s | 51 s / 52 s / 66 s | 261 s / 284 s / 456 s |
-| ↳ OCR, median / mean / p90 | 74 s / 104 s / 252 s | 1.0 s / 1.2 s / 2.0 s | — (no OCR stage) |
-| ↳ LLM, median / mean / p90 | 44 s / 47 s / 57 s | 50 s / 51 s / 64 s | 261 s / 284 s / 456 s |
-
-**CORD v2 total**: normalised match % with 95 % CI (strict match % in brackets)
-
-| Metric | PaddleOCR + Phi-3 | Tesseract + Phi-3 ⚠️ | OCR-free VLM ablation |
-|---|---|---|---|
-| Total | 96.0 [86–99] (80.0) | 26.0 [16–40] (20.0) | 94.0 [84–98] (88.0) |
-| Schema compliance (strict-valid) | 98.0 % [90–100] | 94.0 % [84–98] | 0.0 % [0–7] † |
-| Latency / page, median / mean / p90 | 51 s / 76 s / 185 s | 9 s / 11 s / 20 s | 382 s / 335 s / 517 s |
-
-The **OCR-free VLM** column is **Qwen2.5-VL-3B** reading the image (zero-shot);
-the two text columns are **Phi-3** (2-shot). For the clean, same-family
-controlled comparison — Qwen2.5-3B on OCR text vs Qwen2.5-VL-3B on the image —
-see [OCR-free VLM ablation](#ocr-free-vlm-ablation) below.
-† The VLM produces valid JSON on **100 %** of receipts but wraps it in prose, so
-*strict*-valid (bare JSON only) is 0 %; schema-valid is 100 %.
-
-**Dataset-matched few-shot examples matter.** An earlier CORD run
-(`20260930-092942`) used the **SROIE** few-shot examples (English/Malay
-receipts, ringgit). Switching to **CORD** examples (Indonesian, rupiah, with
-`null` for the unlabelled company/date/address) improved PaddleOCR's total
-from **84 % → 96 %** (LLM misses 8 → 2: fewer cash/subtotal confusions and no
-1000× rupiah rescaling) and lifted schema compliance on Tesseract from
-**68 % → 94 %** (the `null` examples stop the model writing prose on thin OCR).
-
-⚠️ **Tesseract on CORD remains OCR-limited, not a fair baseline.** Its total
-(26 %) is capped by OCR: the gold total is in Tesseract's text for only 34 %
-of CORD receipts (33 of 50 are OCR misses), vs 96 % for PaddleOCR. A
-diagnostic sweep of 11 preprocessing and page-segmentation settings
-(`evaluation/datasets/CORD/diagnose_tesseract.py`,
-[result](evaluation/results/tesseract_diagnosis_CORD.json)) reached at best
-36 % (grayscale `--psm 11`) vs 30 % for the current setting — binarisation and
-upscaling did not help. CORD are phone photos (0.1–12 MP, perspective,
-shadows); classic Tesseract cannot read them, and this is not a
-language/preprocessing setup problem (the scored field is a number). Reported
-for completeness, but the usable CORD pipeline is PaddleOCR.
-
-### LLM comparison (OCR fixed to PaddleOCR)
-
-The same prompt and subsets, run across three small Q4 GGUF models on CPU.
-This is the thesis's core comparison. Runs `20260930-063807` / `20261027-183737`
-(phi3), `20261027-202036` / `20261027-204256` (qwen2.5-3b), `20261027-204939` /
-`20261027-211038` (llama3.2-3b).
-
-**SROIE Task 3**: normalised match % (strict-valid JSON and median LLM time below)
-
-| Metric | Phi-3 Mini (3.8B) | **Qwen2.5-3B** | Llama-3.2-3B |
-|---|---|---|---|
-| Company | 44.0 | 60.0 | 62.0 |
-| Date | 82.0 | 94.0 | 94.0 |
-| Address | 42.0 | 66.0 | 56.0 |
-| Total | 92.0 | 88.0 | 84.0 |
-| **All 4 fields correct** | 26.0 [16–40] | **44.0 [31–58]** | 32.0 [21–46] |
-| Token F1 company / address | 62 / 68 | 74 / 84 | 74 / 77 |
-| Schema compliance (strict-valid) | 96 % | **100 %** | **100 %** |
-| LLM time / page, median | 44 s | 25 s | 23 s |
-
-**CORD v2 total**: normalised match %
-
-| Metric | Phi-3 Mini | **Qwen2.5-3B** | Llama-3.2-3B |
-|---|---|---|---|
-| Total | 96.0 [86–99] | **100.0 [93–100]** | 78.0 [65–87] |
-| Schema compliance (strict-valid) | 98 % | 100 % | 100 % |
-| LLM time / page, median | 13 s | 7 s | 6 s |
-
-**Findings:**
-
-- **Qwen2.5-3B is the best small model, despite being smaller than Phi-3**
-  (3B vs 3.8B): SROIE all-4-fields **44 % vs 26 %**, CORD total **100 % vs
-  96 %**, and ~2× faster. It trails Phi-3 only on the SROIE total (88 vs 92,
-  within the confidence interval). **Model family matters more than size** at
-  this scale.
-- **Derailment is a Phi-3-specific failure mode.** Phi-3 produced invalid or
-  truncated JSON on 4 fields (the `MR. D.I.Y.` prompt-echo on SROIE and the
-  Newton-letter on CORD). Qwen and Llama produced **100 % valid JSON** on both
-  datasets — no derailments at all.
-- **Multilingual ability shows on CORD** (Indonesian receipts): Qwen2.5-3B
-  (strongly multilingual) **100 %**, Phi-3 96 %, **Llama-3.2-3B only 78 %**.
-  Llama is competitive on SROIE but the weakest on CORD totals.
-- Qwen and Llama both read **company and address far better** than Phi-3
-  (token F1 ~74–84 vs 62–68).
-
-### OCR-free VLM ablation
-
-A vision-language model reads the receipt **image directly** and outputs JSON,
-replacing the OCR + LLM stages with one end-to-end step (`src/vlm.py`,
-Qwen2.5-VL-3B via llama-cpp-python, CPU). The controlled comparison is
-**Qwen2.5-3B fed OCR text vs Qwen2.5-VL-3B fed the image** — same family and
-size, so the only difference is the OCR stage. It answers: *is a dedicated OCR
-stage worth it, or should the model read the image itself?*
-
-```bash
-python -m src.vlm --manifest evaluation/datasets/SROIE/subset_test_50.jsonl
-```
-
-The VLM is **much slower on CPU** (~3–4 min/receipt; the vision encoder
-dominates), zero-shot, with images capped at 1280 px. Results are scored by
-the same `evaluate.py`. Both models emit valid JSON on every receipt, but the
-VLM wraps it in prose (100% schema-valid, 0% strict); the text model emits bare
-JSON (100% strict).
-
-**Controlled comparison** (normalised accuracy, 50 receipts each):
-
-| | SROIE all-4 | SROIE company | SROIE address | SROIE total | CORD total | median s/receipt |
-|---|---|---|---|---|---|---|
-| Qwen2.5-3B (OCR text) | 44% [31–58] | 60% | 66% | 88% | **100%** [93–100] | **102s** (SROIE) / **45s** (CORD) |
-| Qwen2.5-VL-3B (image) | **62%** [48–74] | **78%** | **82%** | **96%** | 94% [84–98] | 261s (SROIE) / 382s (CORD) |
-
-Reading the image directly **wins on messy receipts** (SROIE: +18 pts all-4,
-led by address +16 and company +18 — OCR flattens layout, the VLM still sees
-the header and multi-line address), but the **pipeline wins on clean receipts**
-(CORD: 100% vs 94% — PaddleOCR reads a crisp printed total perfectly; the VLM
-occasionally misreads a digit). The VLM costs 2.6×–8.5× more time on CPU.
-
-A known trade-off beyond accuracy: the VLM is a **black box** — with no
-intermediate OCR text, a wrong field cannot be attributed to reading vs
-extraction, unlike the two-stage pipeline. The failure taxonomy below is a
-pipeline-only advantage.
-
-**Where the misses come from** (Phi-3): OCR miss = the gold value is not in the OCR
-text at all; LLM miss = the value was in the OCR text but wasn't extracted
-correctly.
-
-| Dataset / engine | Company OCR / LLM | Date OCR / LLM | Address OCR / LLM | Total OCR / LLM | Summary |
-|---|---|---|---|---|---|
-| SROIE / PaddleOCR | 15 / 14 | 5 / 6 | 16 / 13 | 2 / 3 | roughly **equal** |
-| SROIE / Tesseract | 25 / 4 | 15 / 1 | 27 / 6 | 10 / 3 | mostly **OCR** |
-| CORD / PaddleOCR | – | – | – | 2 / 2 | balanced (LLM misses were 8 with SROIE examples) |
-| CORD / Tesseract | – | – | – | 33 / 4 | almost entirely **OCR** (OCR-limited, see above) |
-
-"In the OCR text" is an automatic text search. It can count a label/print
-difference (e.g. a label typo) as an OCR miss, so these counts are being
-checked against a manual review (M3).
-
-**Notes:**
-
-- The subsets are small (50 receipts): each receipt is 2 percentage points,
-  hence the confidence intervals above.
-- Labels are used as released, with no manual corrections. Some SROIE labels
-  contain typos (e.g. a postcode `B1750` for `81750`), and 5 duplicate-image
-  groups have conflicting labels, so a perfect extractor would not reach
-  100 %.
-- The strict address score is low mainly because of comma, spacing and
-  boundary differences. Normalised match and token F1 show how much of the
-  address was right.
-- Latency is measured with the model already loaded and the few-shot prompt
-  prefix already read. It excludes model load (~4 s) and the one-off warm-up
-  per engine (~70–100 s).
-  - "About 2 minutes per receipt" is the **median**. The mean is 150 s, and
-    1 receipt in 10 takes ≥ 295 s.
-  - 9 of the 50 SROIE receipts are 35 MP scans, which take ~240–315 s of
-    PaddleOCR each; they produce the long tail.
-  - CORD prompts are shorter and the photos smaller, so CORD is faster.
-- **Reproducibility:** an earlier run of the same SROIE subset
-  (`20260930-030537`) produced **identical OCR text, identical raw LLM output
-  and identical extracted fields for all 100 receipt × engine runs** (100/100
-  each; both runs did fresh OCR). Only the timings differed: that run was
-  partly on battery, and the laptop slept once.
-  - Evidence: [`evaluation/results/reproducibility_20260930-030537_vs_20260930-063807.json`](evaluation/results/reproducibility_20260930-030537_vs_20260930-063807.json)
-    holds SHA-256 fingerprints per row (no receipt text) and the run settings
-    of both runs.
-  - To check yourself: `python evaluation/reproducibility.py <run_a> <run_b>`.
-- Per-receipt results: [`evaluation/results/`](evaluation/results/).
+- `tests/` — unit / integration tests (no models or OCR libraries needed)
+- `docs/` — documentation (below)
+
+## Documentation
+
+| Page | What's in it |
+|---|---|
+| [docs/setup.md](docs/setup.md) | Install, Windows notes, model downloads, environment check, tests |
+| [docs/usage.md](docs/usage.md) | Running each stage: OCR, extraction, pipeline, UI, evaluation |
+| [docs/results.md](docs/results.md) | Full result tables, LLM comparison, VLM ablation, reproducibility |
+| [docs/architecture.md](docs/architecture.md) | As-built design, data-flow diagram, formats, decisions |
+| [docs/testing.md](docs/testing.md) | Test plan, test levels, coverage |
+| [docs/milestones.md](docs/milestones.md) | Milestone tracking |
+| [evaluation/datasets/README.md](evaluation/datasets/README.md) | Dataset sources, counts, subsets |
+| [taxonomy_v1.md](evaluation/failure_taxonomy/taxonomy_v1.md) | The cross-model failure taxonomy write-up |
 
 ## Status
 
-- **M1 (Aug 31)** ✅ Topic, background research, design diagram, repo setup,
-  skeleton.
-- **M2 (Sep 30)** ✅ The core pipeline works end to end on a laptop CPU:
-  - PaddleOCR / Tesseract → Phi-3 Mini Q4 → validated JSON
-  - dataset preparation (SROIE, CORD)
-  - batch runner with a per-receipt run log
-  - evaluator and baseline results (see Key Results)
-  - 111 tests with CI
-  - [architecture documentation](docs/architecture.md)
-- **Next (M3):** failure taxonomy v0 (issue #13), Streamlit UI, performance
-  improvements, methodology and results drafts.
+- **M1** ✅ Topic, background research, design diagram, repo setup.
+- **M2** ✅ End-to-end pipeline on a laptop CPU: OCR → LLM → validated JSON,
+  dataset preparation (SROIE, CORD), batch runner, evaluator and baseline
+  results, tests + CI, [architecture docs](docs/architecture.md).
+- **M3** (in progress) — done: failure taxonomy v0 and **v1** (cross-model,
+  50-case manual review), the three-model comparison, the OCR-free VLM
+  ablation, and the Streamlit UI. Remaining: testing documentation and the
+  thesis chapter drafts.
 
 Details: [docs/milestones.md](docs/milestones.md) and the repo's
-Issues/Milestones tabs.
+Issues / Milestones tabs.
