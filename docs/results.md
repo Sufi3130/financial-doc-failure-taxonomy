@@ -204,6 +204,24 @@ and full-value semantics. The feared few-shot *copying* failure never appears
 takeaway: **for these small models, concrete worked examples are a stronger,
 safer lever than longer instructions.**
 
+**Grammar-constrained decoding, off vs on** (issue #25; opt-in `--grammar` /
+UI toggle, off by default). A GBNF built from the Receipt schema forces valid
+JSON; empty pages short-circuit to all-null. Full write-up:
+[`grammar_on_vs_off.md`](../evaluation/results/grammar_on_vs_off.md); tool:
+`evaluation/compare_grammar.py`.
+
+- **Guarantees valid JSON** for the stable models (Qwen, Llama stay 100%
+  schema-valid by construction) and closed Phi-3's one clean gap on CORD
+  (malformed 1 → 0, schema-valid 98 → 100).
+- **Does not fix Phi-3's SROIE derailment** — it relocates it. The grammar
+  forces `{"company": "…` and Phi-3 then spirals *inside* the string value until
+  it truncates, because a JSON string may hold any text. Malformed receipts went
+  2 → 3, not to 0.
+- **No accuracy change** (format constraint, not a value constraint) and **~6×
+  slower** generation. Takeaway: constrained decoding is a validity/safety
+  property, and a syntactic constraint **cannot stop a model-intrinsic
+  derailment** — the clean counterpart to the prompt result above.
+
 ## Notes
 
 - The subsets are small (50 receipts): each receipt is 2 percentage points,

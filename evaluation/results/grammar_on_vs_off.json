@@ -1,0 +1,182 @@
+{
+ "SROIE/phi3": {
+  "all_fields": {
+   "off": 26.0,
+   "on": 26.0
+  },
+  "fields": {
+   "company": {
+    "off": 44.0,
+    "on": 42.0
+   },
+   "date": {
+    "off": 82.0,
+    "on": 80.0
+   },
+   "address": {
+    "off": 42.0,
+    "on": 42.0
+   },
+   "total": {
+    "off": 92.0,
+    "on": 90.0
+   }
+  },
+  "malformed_json": {
+   "off": 2,
+   "on": 3
+  },
+  "schema_valid_rate": {
+   "off": 96.0,
+   "on": 94.0
+  },
+  "paired": {
+   "grammar_fixed": 0,
+   "grammar_broke": 0
+  }
+ },
+ "SROIE/qwen2.5-3b": {
+  "all_fields": {
+   "off": 44.0,
+   "on": 44.0
+  },
+  "fields": {
+   "company": {
+    "off": 60.0,
+    "on": 60.0
+   },
+   "date": {
+    "off": 94.0,
+    "on": 94.0
+   },
+   "address": {
+    "off": 66.0,
+    "on": 66.0
+   },
+   "total": {
+    "off": 88.0,
+    "on": 88.0
+   }
+  },
+  "malformed_json": {
+   "off": 0,
+   "on": 0
+  },
+  "schema_valid_rate": {
+   "off": 100.0,
+   "on": 100.0
+  },
+  "paired": {
+   "grammar_fixed": 0,
+   "grammar_broke": 0
+  }
+ },
+ "SROIE/llama3.2-3b": {
+  "all_fields": {
+   "off": 32.0,
+   "on": 30.0
+  },
+  "fields": {
+   "company": {
+    "off": 62.0,
+    "on": 58.0
+   },
+   "date": {
+    "off": 94.0,
+    "on": 94.0
+   },
+   "address": {
+    "off": 56.0,
+    "on": 58.0
+   },
+   "total": {
+    "off": 84.0,
+    "on": 80.0
+   }
+  },
+  "malformed_json": {
+   "off": 0,
+   "on": 0
+  },
+  "schema_valid_rate": {
+   "off": 100.0,
+   "on": 100.0
+  },
+  "paired": {
+   "grammar_fixed": 0,
+   "grammar_broke": 1
+  }
+ },
+ "CORD/phi3": {
+  "all_fields": {
+   "off": 96.0,
+   "on": 96.0
+  },
+  "fields": {
+   "total": {
+    "off": 96.0,
+    "on": 96.0
+   }
+  },
+  "malformed_json": {
+   "off": 1,
+   "on": 0
+  },
+  "schema_valid_rate": {
+   "off": 98.0,
+   "on": 100.0
+  },
+  "paired": {
+   "grammar_fixed": 0,
+   "grammar_broke": 0
+  }
+ },
+ "CORD/qwen2.5-3b": {
+  "all_fields": {
+   "off": 100.0,
+   "on": 100.0
+  },
+  "fields": {
+   "total": {
+    "off": 100.0,
+    "on": 100.0
+   }
+  },
+  "malformed_json": {
+   "off": 0,
+   "on": 0
+  },
+  "schema_valid_rate": {
+   "off": 100.0,
+   "on": 100.0
+  },
+  "paired": {
+   "grammar_fixed": 0,
+   "grammar_broke": 0
+  }
+ },
+ "CORD/llama3.2-3b": {
+  "all_fields": {
+   "off": 78.0,
+   "on": 78.0
+  },
+  "fields": {
+   "total": {
+    "off": 78.0,
+    "on": 78.0
+   }
+  },
+  "malformed_json": {
+   "off": 0,
+   "on": 0
+  },
+  "schema_valid_rate": {
+   "off": 100.0,
+   "on": 100.0
+  },
+  "paired": {
+   "grammar_fixed": 0,
+   "grammar_broke": 0
+  }
+ }
+}

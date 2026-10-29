@@ -107,8 +107,9 @@ How to run each stage: **[docs/usage.md](docs/usage.md)**.
   50-case manual review), the three-model comparison, the OCR-free VLM
   ablation, the Streamlit UI, testing documentation, and the **prompt and
   few-shot experiments** (issue #24 — v1 vs v2, 2-shot vs 0-shot; both prompts
-  kept with v1 as default, see [docs/results.md](docs/results.md)). Remaining:
-  result charts and the thesis chapter drafts.
+  kept with v1 as default), and **opt-in grammar-constrained JSON decoding**
+  (issue #25 — guarantees valid JSON; see [docs/results.md](docs/results.md)).
+  Remaining: result charts and the thesis chapter drafts.
 
 Details: [docs/milestones.md](docs/milestones.md) and the repo's
 Issues / Milestones tabs.
