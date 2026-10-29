@@ -1,7 +1,9 @@
 """Local LLM inference with llama-cpp-python (CPU, greedy decoding).
 
-No grammar / JSON-schema constrained decoding: forcing valid JSON would hide
-the format failures the taxonomy measures.
+Grammar-constrained decoding is OFF by default: forcing valid JSON would hide
+the format failures the taxonomy measures. It is available as an opt-in
+mitigation (``LLMSettings.grammar``, the ``--grammar`` flag, a UI toggle) that
+constrains output to the Receipt schema (issue #25); see extraction/grammar.py.
 """
 
 import time
@@ -36,6 +38,7 @@ class LLMSettings(BaseModel):
     temperature: float = 0.0
     seed: int = 0
     max_tokens: int = 256
+    grammar: bool = False  # opt-in: constrain decoding to the Receipt JSON schema (issue #25)
 
 
 class Generation(BaseModel):
@@ -55,6 +58,7 @@ class LocalLLM:
     def __init__(self, settings: LLMSettings | None = None):
         self.settings = settings or LLMSettings()
         self._llm = None
+        self._grammar = None
         self.load_s = 0.0
 
     def info(self):
@@ -74,6 +78,10 @@ class LocalLLM:
         s = self.settings
         self._llm = Llama(model_path=s.model_path, n_ctx=s.n_ctx, n_threads=s.n_threads,
                           n_gpu_layers=0, seed=s.seed, verbose=False)
+        if s.grammar:
+            from .grammar import load_grammar
+
+            self._grammar = load_grammar()
         self.load_s = time.perf_counter() - t0
 
     def _perf(self, reset=False):
@@ -98,7 +106,7 @@ class LocalLLM:
         try:
             out = self._llm.create_chat_completion(
                 messages=messages, temperature=s.temperature, seed=s.seed,
-                max_tokens=max_tokens or s.max_tokens)
+                max_tokens=max_tokens or s.max_tokens, grammar=self._grammar)
         except ValueError as e:
             if "context window" not in str(e):
                 raise

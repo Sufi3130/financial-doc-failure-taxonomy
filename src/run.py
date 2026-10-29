@@ -38,8 +38,8 @@ from datetime import datetime
 from importlib import metadata
 from pathlib import Path
 
-from src.extraction import (DEFAULT_MODEL_NAME, MODELS, LLMSettings, LocalLLM, build_messages, parse_output,
-                            resolve_model, to_phi3)
+from src.extraction import (DEFAULT_MODEL_NAME, MODELS, Generation, LLMSettings, LocalLLM, all_null_json,
+                            build_messages, parse_output, resolve_model, to_phi3)
 from src.extraction.fewshot import load_examples, pool_for
 from src.extraction.prompts import PROMPT_VERSION, PROMPT_VERSIONS
 from src.ocr import ENGINES, cached_ocr, get_engine, new_run_dir
@@ -162,7 +162,12 @@ def process_receipt(record, engine, llm, examples, fewshot_ids, run_id, use_cach
         stage = "llm"
         if on_stage:
             on_stage("llm")
-        gen = llm.generate(to_phi3(build_messages(reading.text, examples, prompt_version)))
+        if llm.settings.grammar and not reading.text.strip():
+            # Empty/unreadable OCR in grammar mode: answer all-null deterministically
+            # (issue #25) instead of letting the model write prose on a blank page.
+            gen = Generation(raw_output=all_null_json(), finish_reason="stop", seconds=0.0)
+        else:
+            gen = llm.generate(to_phi3(build_messages(reading.text, examples, prompt_version)))
         row["llm"] = gen.model_dump(mode="json")
         row["timings"].update(llm_s=gen.seconds, llm_prompt_s=gen.prompt_eval_s, llm_gen_s=gen.gen_s)
 
@@ -212,6 +217,7 @@ def run(records, engines, llm, run_dir, shots=2, seed=42, use_cache=True, cache_
     meta = meta or {}
     meta.setdefault("run_id", run_dir.name)
     meta.setdefault("prompt_version", prompt_version)
+    meta.setdefault("grammar", llm.settings.grammar)
     meta.setdefault("engines", {})
     skip = done_keys(run_jsonl)
 
@@ -286,6 +292,9 @@ def main():
                         help=f"LLM: a registry name {sorted(MODELS)} or a path to a .gguf file")
     parser.add_argument("--prompt", default=PROMPT_VERSION, choices=list(PROMPT_VERSIONS),
                         help="prompt version (v1 baseline; v2 adds disambiguation rules)")
+    parser.add_argument("--grammar", action="store_true",
+                        help="constrain decoding to the Receipt JSON schema (issue #25; off by default "
+                             "so the baseline keeps measuring malformed_json)")
     parser.add_argument("--shots", type=int, default=2,
                         help="few-shot examples from the train split of the manifest's dataset")
     parser.add_argument("--seed", type=int, default=42, help="few-shot selection seed")
@@ -300,7 +309,7 @@ def main():
     engines = [get_engine(n) for n in (ENGINES if args.engine == "all" else [args.engine])]
     run_dir = Path(args.resume) if args.resume else new_run_dir("pipeline")
     pool = Path(args.fewshot_pool) if args.fewshot_pool else pool_for(args.manifest)
-    llm = LocalLLM(LLMSettings(model_path=resolve_model(args.model)))
+    llm = LocalLLM(LLMSettings(model_path=resolve_model(args.model), grammar=args.grammar))
 
     meta_path = run_dir / "run_meta.json"
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if args.resume and meta_path.is_file() else {

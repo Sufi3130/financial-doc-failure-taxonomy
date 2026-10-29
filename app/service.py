@@ -42,8 +42,8 @@ MAX_IMAGE_BYTES = 20 * 1024 * 1024       # per-image guard (defence in depth)
 
 
 # ------------------------------------------------------------------ loaders (cached by the caller)
-def load_llm(model_name=DEFAULT_MODEL_NAME):
-    return LocalLLM(LLMSettings(model_path=resolve_model(model_name)))
+def load_llm(model_name=DEFAULT_MODEL_NAME, grammar=False):
+    return LocalLLM(LLMSettings(model_path=resolve_model(model_name), grammar=grammar))
 
 
 def load_engine(name):
