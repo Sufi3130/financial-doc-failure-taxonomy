@@ -1,0 +1,4 @@
+# Figure generation (evaluation/make_figures.py). Not needed to run the pipeline,
+# the UI, or the tests — only to regenerate the thesis figures in docs/figures/.
+#   pip install -r requirements-viz.txt
+matplotlib==3.11.2

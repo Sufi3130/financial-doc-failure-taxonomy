@@ -3,6 +3,19 @@
 Full metrics and findings. For a one-screen summary see the
 [README](../README.md#key-results-at-a-glance).
 
+## Figures
+
+Thesis-ready figures live in [`docs/figures/`](figures/) (PNG for preview, PDF
+for LaTeX). They are generated from the committed result JSONs — see
+[regenerating the figures](#regenerating-the-figures).
+
+| Figure | Shows |
+|---|---|
+| ![Field-level accuracy by model](figures/model_accuracy.png) | Per-field and all-fields accuracy, three models, with Wilson 95 % CIs. |
+| ![Model-stage failures](figures/taxonomy_sroie.png) | SROIE model-stage failure categories per model (Phi-3's malformed-JSON spike). |
+| ![Intervention deltas](figures/experiment_deltas.png) | Accuracy change from each intervention (prompt v1→v2, few-shot 2→0, grammar off→on). |
+| ![Miss source](figures/miss_source_sroie.png) | SROIE failures split into OCR stage vs model stage, PaddleOCR vs Tesseract. |
+
 ## Baseline setup
 
 - Phi-3-mini-4k-instruct Q4 GGUF (llama-cpp-python, CPU), prompt `v1`,
@@ -251,3 +264,22 @@ JSON; empty pages short-circuit to all-null. Full write-up:
     of both runs.
   - To check yourself: `python evaluation/reproducibility.py <run_a> <run_b>`.
 - Per-receipt results: [`evaluation/results/`](../evaluation/results/).
+
+## Regenerating the figures
+
+The figures are **data-driven**: nothing in them is hand-edited, so a new or
+full-dataset run refreshes them without touching the plotting code. Two layers
+keep the slow, run-dependent step separate from rendering:
+
+```bash
+pip install -r requirements-viz.txt        # matplotlib only
+python evaluation/figure_data.py           # run dirs -> evaluation/results/model_accuracy.json
+python evaluation/make_figures.py          # committed JSONs -> docs/figures/*.png + *.pdf
+```
+
+`figure_data.py` needs the baseline run directories (gitignored) and writes the
+committed `model_accuracy.json`. `make_figures.py` reads only committed JSONs
+(`model_accuracy.json`, the three experiment JSONs, and
+`evaluation/failure_taxonomy/by_model_counts.json`), so re-rendering never needs
+the raw runs. To update after a full-dataset scan: regenerate those JSONs, then
+re-run `make_figures.py`.

@@ -1,0 +1,191 @@
+{
+ "meta": {
+  "engine": "paddleocr",
+  "prompt": "v1",
+  "shots": 2,
+  "n_per_cell": 50,
+  "ci": "Wilson 95%",
+  "note": "normalised match %, 50-receipt subsets; baselines in compare_prompts.V1"
+ },
+ "SROIE": {
+  "Phi-3": {
+   "fields": {
+    "company": {
+     "acc": 44.0,
+     "ci": [
+      31.2,
+      57.7
+     ]
+    },
+    "date": {
+     "acc": 82.0,
+     "ci": [
+      69.2,
+      90.2
+     ]
+    },
+    "address": {
+     "acc": 42.0,
+     "ci": [
+      29.4,
+      55.8
+     ]
+    },
+    "total": {
+     "acc": 92.0,
+     "ci": [
+      81.2,
+      96.8
+     ]
+    }
+   },
+   "all_fields": {
+    "acc": 26.0,
+    "ci": [
+     15.9,
+     39.6
+    ]
+   },
+   "schema_valid_rate": 96.0
+  },
+  "Qwen2.5-3B": {
+   "fields": {
+    "company": {
+     "acc": 60.0,
+     "ci": [
+      46.2,
+      72.4
+     ]
+    },
+    "date": {
+     "acc": 94.0,
+     "ci": [
+      83.8,
+      97.9
+     ]
+    },
+    "address": {
+     "acc": 66.0,
+     "ci": [
+      52.2,
+      77.6
+     ]
+    },
+    "total": {
+     "acc": 88.0,
+     "ci": [
+      76.2,
+      94.4
+     ]
+    }
+   },
+   "all_fields": {
+    "acc": 44.0,
+    "ci": [
+     31.2,
+     57.7
+    ]
+   },
+   "schema_valid_rate": 100.0
+  },
+  "Llama-3.2-3B": {
+   "fields": {
+    "company": {
+     "acc": 62.0,
+     "ci": [
+      48.2,
+      74.1
+     ]
+    },
+    "date": {
+     "acc": 94.0,
+     "ci": [
+      83.8,
+      97.9
+     ]
+    },
+    "address": {
+     "acc": 56.0,
+     "ci": [
+      42.3,
+      68.8
+     ]
+    },
+    "total": {
+     "acc": 84.0,
+     "ci": [
+      71.5,
+      91.7
+     ]
+    }
+   },
+   "all_fields": {
+    "acc": 32.0,
+    "ci": [
+     20.8,
+     45.8
+    ]
+   },
+   "schema_valid_rate": 100.0
+  }
+ },
+ "CORD": {
+  "Phi-3": {
+   "fields": {
+    "total": {
+     "acc": 96.0,
+     "ci": [
+      86.5,
+      98.9
+     ]
+    }
+   },
+   "all_fields": {
+    "acc": 96.0,
+    "ci": [
+     86.5,
+     98.9
+    ]
+   },
+   "schema_valid_rate": 98.0
+  },
+  "Qwen2.5-3B": {
+   "fields": {
+    "total": {
+     "acc": 100.0,
+     "ci": [
+      92.9,
+      100.0
+     ]
+    }
+   },
+   "all_fields": {
+    "acc": 100.0,
+    "ci": [
+     92.9,
+     100.0
+    ]
+   },
+   "schema_valid_rate": 100.0
+  },
+  "Llama-3.2-3B": {
+   "fields": {
+    "total": {
+     "acc": 78.0,
+     "ci": [
+      64.8,
+      87.2
+     ]
+    }
+   },
+   "all_fields": {
+    "acc": 78.0,
+    "ci": [
+     64.8,
+     87.2
+    ]
+   },
+   "schema_valid_rate": 100.0
+  }
+ }
+}
