@@ -121,7 +121,8 @@ def fig_model_accuracy(acc):
     fig.suptitle("Field-level extraction accuracy by model", x=0.5, y=0.99,
                  fontsize=12.5, color=INK, ha="center")
     fig.text(0.5, 0.005,
-             "PaddleOCR · v1 prompt · 2-shot · n = 50 per cell · error bars: Wilson 95% CI",
+             "PaddleOCR · v1 prompt · 2-shot · full test split (SROIE n=347, CORD n=100) · "
+             "error bars: Wilson 95% CI",
              ha="center", fontsize=8, color=MUTED)
     fig.tight_layout(rect=[0, 0.03, 1, 0.93])
     _save(fig, "model_accuracy")
@@ -149,8 +150,8 @@ def fig_taxonomy(counts):
               fontsize=9, handlelength=1.1, columnspacing=1.4)
     fig.suptitle("Model-stage failures on SROIE", x=0.5, y=0.99, fontsize=12.5, color=INK)
     fig.text(0.5, 0.005,
-             "PaddleOCR · counts are failing field-instances across 50 receipts × 4 fields · "
-             "excludes OCR-stage value_not_in_ocr (33/33/32, model-independent)",
+             "PaddleOCR · counts are failing field-instances across 347 receipts × 4 fields · "
+             "excludes OCR-stage value_not_in_ocr (169/160/170, model-independent)",
              ha="center", fontsize=8, color=MUTED)
     fig.tight_layout(rect=[0, 0.03, 1, 0.93])
     _save(fig, "taxonomy_sroie")
@@ -252,7 +253,7 @@ def fig_miss_source(counts):
     fig.suptitle("Where SROIE failures come from: OCR vs model stage", x=0.5, y=0.99,
                  fontsize=12.5, color=INK)
     fig.text(0.5, 0.005,
-             "counts across 50 receipts × 4 fields  ·  weaker OCR (Tesseract) roughly doubles the "
+             "counts across 347 receipts × 4 fields  ·  weaker OCR (Tesseract) roughly doubles the "
              "upstream losses the model never gets to recover",
              ha="center", fontsize=8, color=MUTED)
     fig.tight_layout(rect=[0, 0.03, 1, 0.93])
@@ -272,8 +273,14 @@ def _results(name):
 
 
 def main():
-    acc = _results("model_accuracy.json")
-    counts = json.loads((REPO / "evaluation" / "failure_taxonomy" / "by_model_counts.json").read_text(encoding="utf-8"))
+    # Prefer the full-test data (SROIE n=347, CORD n=100) for the headline,
+    # taxonomy and miss-source figures; the intervention-delta figure still
+    # reads the n=50 experiment JSONs (those ablations were run on the subset).
+    acc = _results("model_accuracy_full.json" if (HERE / "results" / "model_accuracy_full.json").exists()
+                   else "model_accuracy.json")
+    cfull = REPO / "evaluation" / "failure_taxonomy" / "by_model_counts_full.json"
+    cbase = REPO / "evaluation" / "failure_taxonomy" / "by_model_counts.json"
+    counts = json.loads((cfull if cfull.exists() else cbase).read_text(encoding="utf-8"))
     fig_model_accuracy(acc)
     fig_taxonomy(counts)
     fig_experiment_deltas(_results("prompt_v1_vs_v2.json"),

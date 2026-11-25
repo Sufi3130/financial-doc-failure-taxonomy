@@ -1,0 +1,145 @@
+{
+ "SROIE": {
+  "paddleocr": {
+   "Phi-3": {
+    "by_category": {
+     "value_not_in_ocr": 169,
+     "wrong_entity": 78,
+     "boundary_too_wide": 36,
+     "boundary_too_narrow": 32,
+     "wrong_total": 31,
+     "wrong_date_format": 6,
+     "wrong_value": 5,
+     "copy_corruption": 9,
+     "malformed_json": 44,
+     "partial_value": 18
+    },
+    "total": 428
+   },
+   "Qwen2.5-3B": {
+    "by_category": {
+     "value_not_in_ocr": 160,
+     "partial_value": 6,
+     "wrong_total": 44,
+     "boundary_too_narrow": 21,
+     "boundary_too_wide": 27,
+     "copy_corruption": 3,
+     "malformed_json": 4,
+     "wrong_entity": 7,
+     "wrong_value": 1
+    },
+    "total": 273
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "value_not_in_ocr": 170,
+     "wrong_entity": 56,
+     "wrong_total": 79,
+     "boundary_too_narrow": 28,
+     "copy_corruption": 9,
+     "partial_value": 9,
+     "boundary_too_wide": 4
+    },
+    "total": 355
+   }
+  },
+  "tesseract": {
+   "Phi-3": {
+    "by_category": {
+     "value_not_in_ocr": 429,
+     "wrong_entity": 19,
+     "wrong_date_format": 7,
+     "boundary_too_narrow": 10,
+     "wrong_total": 54,
+     "boundary_too_wide": 30,
+     "wrong_value": 5,
+     "malformed_json": 72,
+     "copy_corruption": 7,
+     "partial_value": 7
+    },
+    "total": 640
+   },
+   "Qwen2.5-3B": {
+    "by_category": {
+     "value_not_in_ocr": 470,
+     "wrong_total": 64,
+     "wrong_date_format": 3,
+     "copy_corruption": 13,
+     "boundary_too_narrow": 8,
+     "boundary_too_wide": 7,
+     "partial_value": 3,
+     "wrong_value": 5,
+     "wrong_entity": 20
+    },
+    "total": 593
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "value_not_in_ocr": 427,
+     "wrong_total": 89,
+     "wrong_entity": 42,
+     "boundary_too_narrow": 7,
+     "boundary_too_wide": 10,
+     "malformed_json": 44,
+     "copy_corruption": 12,
+     "wrong_value": 1,
+     "partial_value": 1
+    },
+    "total": 633
+   }
+  }
+ },
+ "CORD": {
+  "paddleocr": {
+   "Phi-3": {
+    "by_category": {
+     "wrong_total": 1,
+     "value_not_in_ocr": 1,
+     "malformed_json": 1
+    },
+    "total": 3
+   },
+   "Qwen2.5-3B": {
+    "by_category": {
+     "wrong_total": 1,
+     "value_not_in_ocr": 1
+    },
+    "total": 2
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "wrong_total": 19,
+     "value_not_in_ocr": 2
+    },
+    "total": 21
+   }
+  },
+  "tesseract": {
+   "Phi-3": {
+    "by_category": {
+     "wrong_total": 9,
+     "value_not_in_ocr": 59,
+     "malformed_json": 5,
+     "fewshot_copy": 1
+    },
+    "total": 74
+   },
+   "Qwen2.5-3B": {
+    "by_category": {
+     "wrong_total": 9,
+     "value_not_in_ocr": 63,
+     "fewshot_copy": 1
+    },
+    "total": 73
+   },
+   "Llama-3.2-3B": {
+    "by_category": {
+     "wrong_total": 11,
+     "malformed_json": 20,
+     "value_not_in_ocr": 42
+    },
+    "total": 73
+   }
+  }
+ }
+}
