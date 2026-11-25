@@ -1,0 +1,8 @@
+{"id": "X51005268400", "split": "train", "field": "address", "gold": "NO.2-1-1 JALAN SEITA PRIMA Q U 13/Q SEITA ALAM 40170 SHAN ALAM SELANGOR", "issue": "SHAN ALAM -> SHAH ALAM (N/H swap)"}
+{"id": "X51005268400", "split": "train", "field": "address", "gold": "NO.2-1-1 JALAN SEITA PRIMA Q U 13/Q SEITA ALAM 40170 SHAN ALAM SELANGOR", "issue": "SEITA -> SETIA"}
+{"id": "X51005746140", "split": "train", "field": "address", "gold": "9, JALAN SUBANG JASA 3, 40150 SHAN ALAM, SELANGOR.", "issue": "SHAN ALAM -> SHAH ALAM (N/H swap)"}
+{"id": "X00016469670", "split": "test", "field": "address", "gold": "NO 2 & 4, JALAN BAYU 4, BANDAR SERI ALAM, B1750 MASAI, JOHOR", "issue": "B1750 -> 81750 (postcode B/8)"}
+{"id": "X51005337867", "split": "test", "field": "company", "gold": "OLD TOWN KOPITAM SND BHD", "issue": "KOPITAM -> KOPITIAM (missing I)"}
+{"id": "X51005337867", "split": "test", "field": "company", "gold": "OLD TOWN KOPITAM SND BHD", "issue": "SND -> SDN (transposed)"}
+{"id": "X51005746204", "split": "test", "field": "address", "gold": "NO.49, JALAN DLNARG U3/G, SUBANG PERDANA, 40150 SHAH ALAM, SELANGOR D.E.", "issue": "JALAN DLNARG -> garbled street name"}
+{"id": "X51005749904", "split": "test", "field": "address", "gold": "28-G, GROUND FLOOR, JALAN DINAR A U3/A, TMN SUBANG PERDANA, 40150 SHAN ALAM, SELANGOR.", "issue": "SHAN ALAM -> SHAH ALAM (N/H swap)"}
