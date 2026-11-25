@@ -38,15 +38,17 @@ class FakeEngine(OCREngine):
 
 
 class _FakeSettings:
-    def __init__(self, grammar=False):
+    def __init__(self, grammar=False, recover=False, max_tokens=256):
         self.grammar = grammar
+        self.recover = recover
+        self.max_tokens = max_tokens
 
 
 class FakeLLM:
-    def __init__(self, outputs=None, grammar=False):
+    def __init__(self, outputs=None, grammar=False, recover=False):
         self.outputs = outputs or {}
         self.prompts = []
-        self.settings = _FakeSettings(grammar=grammar)
+        self.settings = _FakeSettings(grammar=grammar, recover=recover)
 
     def generate(self, messages, max_tokens=None):
         text = messages[-1]["content"]
@@ -135,6 +137,44 @@ def test_cached_ocr_keeps_measured_time_and_is_flagged(tmp_path):
     second = read_rows(run(records, [engine], FakeLLM(), tmp_path / "b", **kw)[0])[0]
     assert first["ocr_cached"] is False and second["ocr_cached"] is True
     assert second["timings"]["ocr_s"] == first["timings"]["ocr_s"] and engine.calls == 0
+
+
+DERAILED = "MR. D.I.Y. MR. D.I.Y. and here follows a long spiral with no JSON at all"
+
+
+def test_without_recover_an_unusable_output_stays_malformed(tmp_path):
+    records = make_records(tmp_path, ["r1"])
+    llm = FakeLLM({"TOTAL": DERAILED})  # recover off (default)
+    run_jsonl, _ = run(records, [FakeEngine()], llm, tmp_path / "run", shots=0,
+                       cache_dir=tmp_path / "cache", fewshot_loader=no_fewshot, log=lambda *_: None)
+    row = read_rows(run_jsonl)[0]
+    assert not row["outcome"]["lenient"]            # unusable -> would be tagged malformed_json
+    assert not row["outcome"]["schema_valid"]
+    assert "recovery" not in row and len(llm.prompts) == 2  # warm-up + one generate, no retry
+
+
+def test_recover_retry_recovers_a_usable_output(tmp_path):
+    records = make_records(tmp_path, ["r1"])
+    # first pass derails; the stricter retry prompt (RETRY_INSTRUCTION) returns valid JSON
+    llm = FakeLLM({"Output ONLY one JSON": GOOD, "TOTAL": DERAILED}, recover=True)
+    run_jsonl, meta = run(records, [FakeEngine()], llm, tmp_path / "run", shots=0,
+                          cache_dir=tmp_path / "cache", fewshot_loader=no_fewshot, log=lambda *_: None)
+    row = read_rows(run_jsonl)[0]
+    assert row["recovery"] == "retry"
+    assert row["outcome"]["strict_valid"] and row["outcome"]["lenient"]["company"] == "A"
+    assert meta["summary"]["fake"]["failure_counts"] == {}  # no malformed left
+
+
+def test_recover_falls_back_to_all_null(tmp_path):
+    records = make_records(tmp_path, ["r1"])
+    # both the first pass and the retry derail -> fall back to the all-null object
+    llm = FakeLLM({"Output ONLY one JSON": DERAILED, "TOTAL": DERAILED}, recover=True)
+    run_jsonl, _ = run(records, [FakeEngine()], llm, tmp_path / "run", shots=0,
+                       cache_dir=tmp_path / "cache", fewshot_loader=no_fewshot, log=lambda *_: None)
+    row = read_rows(run_jsonl)[0]
+    assert row["recovery"] == "fallback_all_null"
+    assert row["outcome"]["schema_valid"]
+    assert row["outcome"]["lenient"] == {"company": None, "date": None, "address": None, "total": None}
 
 
 def test_fewshot_receipt_is_not_extracted(tmp_path):

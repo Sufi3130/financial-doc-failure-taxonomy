@@ -1,0 +1,24 @@
+{
+ "SROIE/phi3": {
+  "all_fields": {
+   "off": 26.0,
+   "on": 26.0
+  },
+  "malformed_json": {
+   "off": 2,
+   "on": 0
+  },
+  "schema_valid_rate": {
+   "off": 96.0,
+   "on": 100.0
+  },
+  "recovery_methods": {
+   "fallback_all_null": 2,
+   "retry": 1
+  },
+  "paired": {
+   "recover_fixed": 0,
+   "recover_broke": 0
+  }
+ }
+}

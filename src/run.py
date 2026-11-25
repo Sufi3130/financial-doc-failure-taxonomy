@@ -39,7 +39,7 @@ from importlib import metadata
 from pathlib import Path
 
 from src.extraction import (DEFAULT_MODEL_NAME, MODELS, Generation, LLMSettings, LocalLLM, all_null_json,
-                            build_messages, parse_output, resolve_model, to_phi3)
+                            build_messages, build_retry_messages, parse_output, resolve_model, to_phi3)
 from src.extraction.fewshot import load_examples, pool_for
 from src.extraction.prompts import PROMPT_VERSION, PROMPT_VERSIONS
 from src.ocr import ENGINES, cached_ocr, get_engine, new_run_dir
@@ -177,9 +177,28 @@ def process_receipt(record, engine, llm, examples, fewshot_ids, run_id, use_cach
         t0 = time.perf_counter()
         outcome = parse_output(gen.raw_output, gen.finish_reason)
         row["timings"]["parse_s"] = round(time.perf_counter() - t0, 4)
+
+        # Recovery (issue #33, opt-in): an unusable output (empty lenient parse,
+        # i.e. a derailment that would be tagged malformed_json) gets one retry
+        # with a stricter prompt; if that is still unusable, fall back to the
+        # all-null object. Guarantees valid JSON without discarding any fields a
+        # partly-usable output already salvaged. Off by default so the baseline
+        # keeps observing derailment.
+        row["timings"].setdefault("llm_retry_s", 0.0)
+        if getattr(llm.settings, "recover", False) and not outcome.lenient:
+            gen2 = llm.generate(to_phi3(build_retry_messages(reading.text, examples, prompt_version)),
+                                max_tokens=min(128, llm.settings.max_tokens))
+            row["llm_retry"] = gen2.model_dump(mode="json")
+            row["timings"]["llm_retry_s"] = gen2.seconds
+            out2 = parse_output(gen2.raw_output, gen2.finish_reason)
+            if out2.lenient:
+                outcome, row["recovery"] = out2, "retry"
+            else:
+                outcome, row["recovery"] = parse_output(all_null_json(), "stop"), "fallback_all_null"
+
         row["outcome"] = outcome.model_dump(mode="json")
         t = row["timings"]
-        t["total_s"] = round(t["ocr_s"] + t["llm_s"] + t["parse_s"], 3)
+        t["total_s"] = round(t["ocr_s"] + t["llm_s"] + t["parse_s"] + t.get("llm_retry_s", 0.0), 3)
     except Exception as e:
         row["error"] = {"stage": stage, "type": type(e).__name__, "message": str(e)[:500]}
     row["timings"]["wall_s"] = round(time.perf_counter() - t_start, 3)
@@ -218,6 +237,7 @@ def run(records, engines, llm, run_dir, shots=2, seed=42, use_cache=True, cache_
     meta.setdefault("run_id", run_dir.name)
     meta.setdefault("prompt_version", prompt_version)
     meta.setdefault("grammar", llm.settings.grammar)
+    meta.setdefault("recover", getattr(llm.settings, "recover", False))
     meta.setdefault("engines", {})
     skip = done_keys(run_jsonl)
 
@@ -295,6 +315,10 @@ def main():
     parser.add_argument("--grammar", action="store_true",
                         help="constrain decoding to the Receipt JSON schema (issue #25; off by default "
                              "so the baseline keeps measuring malformed_json)")
+    parser.add_argument("--recover", action="store_true",
+                        help="on an unusable/derailed output, retry once with a stricter prompt then "
+                             "fall back to all-null (issue #33; off by default so the baseline keeps "
+                             "measuring malformed_json)")
     parser.add_argument("--shots", type=int, default=2,
                         help="few-shot examples from the train split of the manifest's dataset")
     parser.add_argument("--seed", type=int, default=42, help="few-shot selection seed")
@@ -309,7 +333,8 @@ def main():
     engines = [get_engine(n) for n in (ENGINES if args.engine == "all" else [args.engine])]
     run_dir = Path(args.resume) if args.resume else new_run_dir("pipeline")
     pool = Path(args.fewshot_pool) if args.fewshot_pool else pool_for(args.manifest)
-    llm = LocalLLM(LLMSettings(model_path=resolve_model(args.model), grammar=args.grammar))
+    llm = LocalLLM(LLMSettings(model_path=resolve_model(args.model), grammar=args.grammar,
+                               recover=args.recover))
 
     meta_path = run_dir / "run_meta.json"
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if args.resume and meta_path.is_file() else {
