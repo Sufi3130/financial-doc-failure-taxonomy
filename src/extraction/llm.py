@@ -39,6 +39,8 @@ class LLMSettings(BaseModel):
     seed: int = 0
     max_tokens: int = 256
     grammar: bool = False  # opt-in: constrain decoding to the Receipt JSON schema (issue #25)
+    recover: bool = False  # opt-in: retry once (stricter prompt) + all-null fallback on an
+    # unusable/derailed output, so malformed JSON is recovered rather than emitted (issue #33)
 
 
 class Generation(BaseModel):

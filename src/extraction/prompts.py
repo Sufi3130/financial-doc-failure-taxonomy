@@ -73,6 +73,26 @@ def build_messages(ocr_text, examples=(), version=PROMPT_VERSION):
     return messages
 
 
+# Prepended to the final user turn on a recovery retry (issue #33): a terse,
+# explicit instruction that nudges a derailed model back onto a bare JSON object.
+# Because decoding is greedy (temperature 0) a plain retry would be identical, so
+# the retry has to change the input.
+RETRY_INSTRUCTION = (
+    "Output ONLY one JSON object with exactly these keys: company, date, "
+    "address, total. No commentary, no repetition, no extra text. Use null for "
+    "a field that is not on the receipt."
+)
+
+
+def build_retry_messages(ocr_text, examples=(), version=PROMPT_VERSION):
+    """Messages for the recovery retry: the normal prompt with RETRY_INSTRUCTION
+    prepended to the final user turn (keeps a single user turn, which to_phi3 folds)."""
+    messages = build_messages(ocr_text, examples, version)
+    messages[-1] = {"role": "user",
+                    "content": RETRY_INSTRUCTION + "\n\n" + messages[-1]["content"]}
+    return messages
+
+
 def to_phi3(messages):
     """Fold system messages into the first user message."""
     system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
