@@ -33,6 +33,14 @@ All percentages are over the 50 receipts. **[a–b] is the 95 % confidence
 interval** (Wilson). With n = 50, intervals are about ±10–14 points, so small
 differences between configurations are not meaningful on their own.
 
+> **Scope note.** The Phi-3-only tables in this and the next section (both OCR
+> engines, with fresh-OCR latencies) are the original **50-receipt** diagnostic.
+> The headline three-model comparison now runs on the **full test split**
+> (SROIE n=347, CORD n=100) — see
+> [LLM comparison](#llm-comparison-ocr-fixed-to-paddleocr) below. The VLM
+> ablation and the prompt/few-shot/grammar experiments also stay on the
+> 50-receipt subset, as noted in their sections.
+
 ## SROIE Task 3
 
 Normalised match % with 95 % CI (strict match % in brackets):
@@ -89,48 +97,49 @@ for completeness, but the usable CORD pipeline is PaddleOCR.
 
 ## LLM comparison (OCR fixed to PaddleOCR)
 
-The same prompt and subsets, run across three small Q4 GGUF models on CPU.
-This is the thesis's core comparison. Runs `20260930-063807` / `20261027-183737`
-(phi3), `20261027-202036` / `20261027-204256` (qwen2.5-3b), `20261027-204939` /
-`20261027-211038` (llama3.2-3b).
+The same prompt, run across three small Q4 GGUF models on CPU, on the **full
+test split** (SROIE n=347, CORD n=100). This is the thesis's core comparison.
+Runs `20261104-013736` / `20261105-012015` (phi3), `20261104-165458` /
+`20261105-025355` (qwen2.5-3b), `20261104-212642` / `20261105-031508`
+(llama3.2-3b).
 
-**SROIE Task 3**: normalised match % (strict-valid JSON and median LLM time below)
+**SROIE Task 3** (n=347): normalised match % (median LLM time below)
 
 | Metric | Phi-3 Mini (3.8B) | **Qwen2.5-3B** | Llama-3.2-3B |
 |---|---|---|---|
-| Company | 44.0 | 60.0 | 62.0 |
-| Date | 82.0 | 94.0 | 94.0 |
-| Address | 42.0 | 66.0 | 56.0 |
-| Total | 92.0 | 88.0 | 84.0 |
-| **All 4 fields correct** | 26.0 [16–40] | **44.0 [31–58]** | 32.0 [21–46] |
-| Token F1 company / address | 62 / 68 | 74 / 84 | 74 / 77 |
-| Schema compliance (strict-valid) | 96 % | **100 %** | **100 %** |
-| LLM time / page, median | 44 s | 25 s | 23 s |
+| Company | 53.0 | 73.2 | 67.1 |
+| Date | 87.3 | 92.8 | 93.4 |
+| Address | 49.9 | 69.7 | 61.1 |
+| Total | 86.5 | 85.6 | 76.1 |
+| **All 4 fields correct** | 32.3 [28–37] | **48.4 [43–54]** | 32.9 [28–38] |
+| Token F1 company / address | 69 / 76 | 80 / 88 | 78 / 82 |
+| Schema compliance (strict-valid) | 96.8 % | 99.7 % | **100 %** |
+| LLM time / page, median | 40 s | 23 s | 20 s |
 
-**CORD v2 total**: normalised match %
+**CORD v2 total** (n=100): normalised match %
 
 | Metric | Phi-3 Mini | **Qwen2.5-3B** | Llama-3.2-3B |
 |---|---|---|---|
-| Total | 96.0 [86–99] | **100.0 [93–100]** | 78.0 [65–87] |
-| Schema compliance (strict-valid) | 98 % | 100 % | 100 % |
-| LLM time / page, median | 13 s | 7 s | 6 s |
+| Total | 96.8 [91–99] | **97.9 [93–99]** | 77.9 [69–85] |
+| Schema compliance (strict-valid) | 99.0 % | 100 % | 100 % |
+| LLM time / page, median | 10 s | 7 s | 6 s |
 
 **Findings:**
 
 - **Qwen2.5-3B is the best small model, despite being smaller than Phi-3**
-  (3B vs 3.8B): SROIE all-4-fields **44 % vs 26 %**, CORD total **100 % vs
-  96 %**, and ~2× faster. It trails Phi-3 only on the SROIE total (88 vs 92,
+  (3B vs 3.8B): SROIE all-4-fields **48 % vs 32 %**, CORD total **98 % vs
+  97 %**, and ~2× faster. It trails Phi-3 only on the SROIE total (86 vs 87,
   within the confidence interval). **Model family matters more than size** at
   this scale.
 - **Derailment is a Phi-3-specific failure mode.** Phi-3 produced invalid or
-  truncated JSON on 4 fields (the `MR. D.I.Y.` prompt-echo on SROIE and the
-  Newton-letter on CORD). Qwen and Llama produced **100 % valid JSON** on both
-  datasets — no derailments at all.
+  truncated JSON on **44 field-instances** (the `MR. D.I.Y.` prompt-echo and
+  similar). Qwen had 4 (a single malformed receipt on SROIE, 99.7 % valid) and
+  Llama 0 (100 % valid); neither shows Phi-3's systematic derailment.
 - **Multilingual ability shows on CORD** (Indonesian receipts): Qwen2.5-3B
-  (strongly multilingual) **100 %**, Phi-3 96 %, **Llama-3.2-3B only 78 %**.
+  (strongly multilingual) **98 %**, Phi-3 97 %, **Llama-3.2-3B only 78 %**.
   Llama is competitive on SROIE but the weakest on CORD totals.
-- Qwen and Llama both read **company and address far better** than Phi-3
-  (token F1 ~74–84 vs 62–68).
+- Qwen and Llama both read **company and address better** than Phi-3
+  (token F1 ~78–88 vs 69–76).
 
 ## OCR-free VLM ablation
 
@@ -171,8 +180,11 @@ pipeline-only advantage.
 
 ## Where the misses come from (OCR vs LLM)
 
-Phi-3. OCR miss = the gold value is not in the OCR text at all; LLM miss = the
-value was in the OCR text but wasn't extracted correctly.
+Phi-3, 50-receipt subset. OCR miss = the gold value is not in the OCR text at
+all; LLM miss = the value was in the OCR text but wasn't extracted correctly.
+(On the full test split the OCR-stage misses across the three models rise from
+169/160/170 with PaddleOCR to 429/470/427 with Tesseract, while model-stage
+misses stay in a similar range — see the miss-source figure.)
 
 | Dataset / engine | Company OCR / LLM | Date OCR / LLM | Address OCR / LLM | Total OCR / LLM | Summary |
 |---|---|---|---|---|---|
@@ -273,13 +285,15 @@ keep the slow, run-dependent step separate from rendering:
 
 ```bash
 pip install -r requirements-viz.txt        # matplotlib only
-python evaluation/figure_data.py           # run dirs -> evaluation/results/model_accuracy.json
+python evaluation/make_fulltest_data.py    # full-test run dirs -> *_full.json
 python evaluation/make_figures.py          # committed JSONs -> docs/figures/*.png + *.pdf
 ```
 
-`figure_data.py` needs the baseline run directories (gitignored) and writes the
-committed `model_accuracy.json`. `make_figures.py` reads only committed JSONs
-(`model_accuracy.json`, the three experiment JSONs, and
-`evaluation/failure_taxonomy/by_model_counts.json`), so re-rendering never needs
-the raw runs. To update after a full-dataset scan: regenerate those JSONs, then
-re-run `make_figures.py`.
+`make_fulltest_data.py` needs the full-test run directories (gitignored) and
+writes the committed `model_accuracy_full.json` and
+`by_model_counts_full.json`. `make_figures.py` reads only committed JSONs: it
+**prefers the `*_full.json`** (full test split) when present and otherwise falls
+back to the n=50 `model_accuracy.json` / `by_model_counts.json`, plus the three
+experiment JSONs for the intervention-delta figure (which stays on the
+50-receipt subset). Re-rendering never needs the raw runs. The older
+`figure_data.py` still regenerates the n=50 `model_accuracy.json`.

@@ -23,14 +23,15 @@ engines × 2 datasets (SROIE, CORD).
 
 ## Key results at a glance
 
-Three small models, same prompt and data, OCR fixed to PaddleOCR
-(normalised accuracy; full tables in **[docs/results.md](docs/results.md)**):
+Three small models, same prompt and data, OCR fixed to PaddleOCR, on the full
+test split (SROIE n=347, CORD n=100; normalised accuracy; full tables in
+**[docs/results.md](docs/results.md)**):
 
 | Model | SROIE all-4 fields | CORD total | Valid JSON | LLM s/page |
 |---|---|---|---|---|
-| Phi-3 Mini (3.8B) | 26% | 96% | 96% | 44 s |
-| **Qwen2.5-3B** | **44%** | **100%** | 100% | 25 s |
-| Llama-3.2-3B (3B) | 32% | 78% | 100% | 23 s |
+| Phi-3 Mini (3.8B) | 32% | 97% | 96.8% | 40 s |
+| **Qwen2.5-3B** | **48%** | **98%** | 99.7% | 23 s |
+| Llama-3.2-3B (3B) | 33% | 78% | 100% | 20 s |
 
 **Headline finding:** the smallest model, **Qwen2.5-3B, is the most accurate
 and ~2× faster — model family matters more than size** at this scale. (Two
