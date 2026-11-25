@@ -139,6 +139,38 @@ def edit_distance(a, b, limit=3):
     return min(prev[-1], limit)
 
 
+_LABEL_NOISE = None
+
+
+def _label_noise():
+    """(receipt_id, field) pairs whose SROIE gold label is known-noisy (issue #28)."""
+    global _LABEL_NOISE
+    if _LABEL_NOISE is None:
+        _LABEL_NOISE = set()
+        path = REPO_ROOT / "evaluation" / "datasets" / "SROIE" / "label_noise.jsonl"
+        if path.is_file():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    d = json.loads(line)
+                    _LABEL_NOISE.add((d["id"], d["field"]))
+    return _LABEL_NOISE
+
+
+def gold_label_is_noisy(field, receipt_id):
+    """True when the SROIE gold label for this (receipt, field) is known-noisy
+    (issue #28 flag list), so the printed value is actually readable and a
+    strict in-OCR miss should be treated as model-stage, not an OCR miss
+    (issue #27).
+
+    This deliberately relies on the curated flag rather than an automatic
+    near-match: on a single receipt a tagger cannot tell a noisy *gold label*
+    (the OCR has the right value) from a genuine OCR *corruption* (the value is
+    not in the OCR) — the 50-case review found both, and an edit-distance
+    heuristic mislabels the OCR-corruption cases. Dates/totals keep the exact
+    check."""
+    return field in ("company", "address") and (receipt_id, field) in _label_noise()
+
+
 def classify_field(field, pred, gold, gold_norm, locale, ocr_text, extra_amounts):
     """Primary category and subtype for a wrong field whose gold value is in the OCR text.
     Rules refined after the v0 manual review (see taxonomy_v0.md)."""
@@ -180,10 +212,15 @@ def classify_field(field, pred, gold, gold_norm, locale, ocr_text, extra_amounts
         return "boundary_too_wide", "adjacent_text" if (p - g) <= ocr_tokens else "hallucinated_extension"
     if p <= g:
         return "boundary_too_narrow", None  # e.g. a name printed over two lines, first line only
+    pred_is_printed = bool(p) and (pred_sq in ocr_sq or len(p & ocr_tokens) >= 0.8 * len(p))
     distinctive = (p & g) - GENERIC_TOKENS
-    if not distinctive or len(distinctive) / max(len(g - GENERIC_TOKENS), 1) < 0.5:
-        # another name/address that is printed on the receipt (brand vs operator, buyer vs seller)
-        if pred_sq in ocr_sq or len(p & ocr_tokens) >= 0.8 * len(p):
+    weak_overlap = not distinctive or len(distinctive) / max(len(g - GENERIC_TOKENS), 1) < 0.5
+    # A different complete entity that is printed on the receipt (brand vs operator,
+    # buyer vs seller) is a wrong_entity even when it shares generic/location tokens
+    # with the gold. partial_value is reserved for a genuine fragment of the gold
+    # that is not itself a printed name.
+    if weak_overlap or (pred_is_printed and (p - g)):
+        if pred_is_printed:
             return "wrong_entity", None
         return "wrong_value", "not_in_ocr"
     return "partial_value", None
@@ -265,12 +302,24 @@ def tag_receipt(record, row, run_id, dataset, fewshot=None):
 
         from evaluation.evaluate import value_in_ocr
         in_ocr = value_in_ocr(field, g_norm, ocr_text, locale)
+        # A strict-substring miss on company/address can still be a near match
+        # (noisy gold label or a 1-char OCR slip): then the value is effectively
+        # readable and the failure is model-stage, not an OCR miss (issue #27).
+        # Reroute a noisy-gold miss to model-stage only when the model actually
+        # read a printed value from *this* engine's OCR. On a weak engine that
+        # also garbled the field (e.g. Tesseract), the value is genuinely absent
+        # and it stays an OCR miss even if the gold label is noisy.
+        pred_printed = bool(p) and squash(p) in squash(ocr_text)
+        near_ocr = (not in_ocr) and gold_label_is_noisy(field, record["id"]) and pred_printed
+        ocr_miss = (not in_ocr) and not near_ocr
         tags = list(receipt_tags)
         if copied:
             tags.append("fewshot_copy")
-        if not in_ocr:
+        if ocr_miss:
             tags.append("value_not_in_ocr")
         else:
+            if near_ocr:
+                tags.append("gold_or_ocr_near_match")
             conf = gold_pieces_confidence(field, g_norm, lines, locale)
             if conf is not None and conf < LOW_CONF:
                 tags.append("ocr_confidence_low")
@@ -278,7 +327,7 @@ def tag_receipt(record, row, run_id, dataset, fewshot=None):
             primary, subtype = "pipeline_error", row["error"].get("type")
         elif not usable:
             primary, subtype = "malformed_json", malformed_subtype(outcome, row.get("llm"))
-        elif not in_ocr:
+        elif ocr_miss:
             primary, subtype = "value_not_in_ocr", None
             if p is None or not str(p).strip():
                 tags.append("empty_field")
