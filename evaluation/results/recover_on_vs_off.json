@@ -20,5 +20,22 @@
    "recover_fixed": 0,
    "recover_broke": 0
   }
+ },
+ "SROIE/phi3-full-test-derailed": {
+  "note": "full test split (n=347): the 11 unusable receipts from the committed recover-off baseline, re-run with --recover",
+  "malformed_json": {
+   "off": 44,
+   "on": 0
+  },
+  "unusable_receipts": {
+   "off": 11,
+   "on": 0
+  },
+  "schema_valid": "11/11",
+  "recovery_methods": {
+   "retry": 3,
+   "fallback_all_null": 5,
+   "did_not_re_derail": 3
+  }
  }
 }

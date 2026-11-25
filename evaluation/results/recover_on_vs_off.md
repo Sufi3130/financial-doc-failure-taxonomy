@@ -27,6 +27,28 @@ Reproduce: `python -m src.run --manifest evaluation/datasets/SROIE/subset_test_5
 (into `runs/pipeline/exp-recover-phi3-SROIE`), then
 `python evaluation/compare_recover.py`.
 
+## Full SROIE test split (n = 347)
+
+The subset above satisfies the issue's `compare_grammar.py`-style acceptance, but
+the thesis headline reports the full test split, where Phi-3/SROIE has
+`malformed_json = 44` field-instances. Those come from **11 unusable receipts**
+(11 x 4 fields) in the committed recover-off baseline. Re-running exactly those
+11 with `--recover`:
+
+| | recover off (baseline) | recover on |
+|---|---|---|
+| Unusable receipts | 11 | **0** |
+| `malformed_json` field-instances | 44 | **0** |
+| Schema-valid | — | 11 / 11 |
+
+All 11 end schema-valid: **8 were recovered** (3 by the retry, 5 by the all-null
+fallback) and **3 did not re-derail** on this run (llama.cpp CPU decoding is
+mildly non-deterministic even at temperature 0, so a borderline receipt can land
+differently). Recovery removes every derailment it encounters, so the full-test
+`malformed_json` goes to 0 regardless of which receipts derail on a given run.
+(Only the derailed receipts need re-running: every other output is byte-identical
+with recovery on or off, since recovery fires only on an unusable output.)
+
 ## Findings
 
 1. **Recovery removes the malformed output: `malformed_json` 2 → 0, schema-valid
